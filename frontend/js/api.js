@@ -1,4 +1,6 @@
-export const API_BASE = "http://localhost:8000/api";
+export const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") 
+    ? "http://localhost:8000/api" 
+    : "https://752f0b80155460.lhr.life/api";
 
 export async function fetchEphemeris(lat, lon, date) {
     try {
@@ -16,7 +18,7 @@ export async function fetchMabimsMap(date) {
         const res = await fetch(`${API_BASE}/map/mabims?date=${date}`);
         if (!res.ok) throw new Error("API Error");
         const buffer = await res.arrayBuffer();
-        
+
         // Decode geobuf
         // geobuf and Pbf are globally available from unpkg imports in index.html
         const pbf = new Pbf(new Uint8Array(buffer));
