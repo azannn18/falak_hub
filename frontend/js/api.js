@@ -3,7 +3,7 @@ const isLocal = window.location.hostname === "localhost" || window.location.host
 
 // PENTING: Ganti TUNNEL_URL ini dengan URL localhost.run Anda yang aktif!
 // Pastikan tidak ada '/' di akhir URL.
-const TUNNEL_URL = "https://7c4b7a839ff8b9.lhr.life"; 
+const TUNNEL_URL = "https://8168e417ca7b27.lhr.life"; 
 
 export const API_BASE = isLocal ? "http://localhost:8080/api" : `${TUNNEL_URL}/api`;
 export async function fetchEphemeris(lat, lon, date) {
