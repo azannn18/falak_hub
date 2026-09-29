@@ -1,4 +1,11 @@
-export const API_BASE = "https://7c4b7a839ff8b9.lhr.life/api";
+// Deteksi apakah sedang berjalan di localhost
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+// PENTING: Ganti TUNNEL_URL ini dengan URL localhost.run Anda yang aktif!
+// Pastikan tidak ada '/' di akhir URL.
+const TUNNEL_URL = "https://7c4b7a839ff8b9.lhr.life"; 
+
+export const API_BASE = isLocal ? "http://localhost:8080/api" : `${TUNNEL_URL}/api`;
 export async function fetchEphemeris(lat, lon, date) {
     try {
         const res = await fetch(`${API_BASE}/ephemeris?lat=${lat}&lon=${lon}&date=${date}`);
