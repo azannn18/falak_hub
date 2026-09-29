@@ -1,4 +1,4 @@
-export const API_BASE = "https://a61cc584603b4bde-158-140-163-67.serveousercontent.com/api";
+export const API_BASE = "https://3eb766dd4c8729.lhr.life/api";
 export async function fetchEphemeris(lat, lon, date) {
     try {
         const res = await fetch(`${API_BASE}/ephemeris?lat=${lat}&lon=${lon}&date=${date}`);
