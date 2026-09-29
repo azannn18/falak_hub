@@ -1,6 +1,6 @@
 export const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") 
     ? "http://localhost:8001/api" 
-    : "https://752f0b80155460.lhr.life/api";
+    : "https://7c4b7a839ff8b9.lhr.life";
 
 export async function fetchEphemeris(lat, lon, date) {
     try {
