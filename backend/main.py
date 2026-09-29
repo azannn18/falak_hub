@@ -11,7 +11,7 @@ from ai.predictive_cache import PredictiveCache
 
 app = FastAPI(title="FalakHub API", version="1.1.0")
 
-# CORS for frontend
+# CORS untuk mengizinkan akses dari Vercel/Frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -97,13 +97,3 @@ async def search_location(q: str):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
