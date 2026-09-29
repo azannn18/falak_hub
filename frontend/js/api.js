@@ -1,7 +1,4 @@
-export const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") 
-    ? "http://localhost:8001/api" 
-    : "https://7c4b7a839ff8b9.lhr.life";
-
+export const API_BASE = "https://7c4b7a839ff8b9.lhr.life/api";
 export async function fetchEphemeris(lat, lon, date) {
     try {
         const res = await fetch(`${API_BASE}/ephemeris?lat=${lat}&lon=${lon}&date=${date}`);
