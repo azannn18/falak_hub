@@ -232,6 +232,51 @@ function setupUI() {
     if (backdrop) {
         backdrop.addEventListener('click', closeDrawers);
     }
+
+    // Tracker Button Logic
+    $('btn-point')?.addEventListener('click', async () => {
+        const trackerStatus = $('tracker-status');
+        if (!trackerStatus) return;
+
+        // Gunakan posisi Bulan/Hilal aktif sesuai slider
+        const offsetH   = appState.timeOffsetMinutes / 60;
+        const mAlt = appState.baseMoonAlt - offsetH * 14.5;
+        const mAz  = appState.baseMoonAz  + offsetH * 14.5;
+
+        const targetData = {
+            target_azimuth: parseFloat(mAz.toFixed(2)),
+            target_altitude: parseFloat(mAlt.toFixed(2))
+        };
+
+        trackerStatus.innerText = "Status: Mengirim perintah ke Server...";
+        trackerStatus.style.color = "#3B82F6"; // Blue
+
+        try {
+            // Kita gunakan API_BASE yang sama dengan ephemeris
+            const { API_BASE } = await import('./api.js');
+            const response = await fetch(`${API_BASE}/point-hilal`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(targetData)
+            });
+
+            const result = await response.json();
+            
+            if (response.ok) {
+                trackerStatus.style.color = "#10B981"; // Green
+                trackerStatus.innerText = `Status: Berhasil!\nTarget: Azimuth ${targetData.target_azimuth}°, Altitude ${targetData.target_altitude}°`;
+            } else {
+                trackerStatus.style.color = "#EF4444"; // Red
+                trackerStatus.innerText = `Status: Gagal dari Server.\nError: ${JSON.stringify(result)}`;
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            trackerStatus.style.color = "#EF4444";
+            trackerStatus.innerText = "Status: Terjadi kesalahan jaringan.";
+        }
+    });
 }
 
 // ── Nominatim Geocoder Fallback ───────────────────────────────
