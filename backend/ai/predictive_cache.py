@@ -1,7 +1,6 @@
 import json
 import geobuf
 import numpy as np
-from sklearn.cluster import KMeans
 from datetime import datetime
 from astronomy.engine import FalakCalculator
 
@@ -10,19 +9,10 @@ class PredictiveCache:
         self.calc = calculator
         self.cache = {}
         self.logs = []
-        # We would train this KMeans on historical queries to identify 'hotspots' 
-        # and pre-compute grids for those centers.
-        self.model = KMeans(n_clusters=5, random_state=42)
         
     def train(self, query_logs):
-        """Train model to find high-density query regions."""
+        """Mock training to reduce Vercel serverless size (removed scikit-learn)."""
         self.logs.extend(query_logs)
-        if len(self.logs) >= 5:
-            # query_logs shape: [[lat, lon], ...]
-            try:
-                self.model.fit(self.logs)
-            except Exception:
-                pass
 
     def generate_global_grid(self, dt: datetime, resolution: int = 5):
         """

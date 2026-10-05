@@ -1,13 +1,22 @@
+import os
 import math
 from datetime import datetime, timezone
-from skyfield.api import load, wgs84
+from skyfield.api import Loader, wgs84
+from skyfield.jpllib import SpiceKernel
 from skyfield import almanac
 from hijridate import Gregorian
 
 class FalakCalculator:
     def __init__(self):
-        # Load the ephemeris (DE421) and timescale
-        self.eph = load('de421.bsp')
+        # Create a loader that writes to /tmp to avoid Vercel read-only filesystem error
+        load = Loader('/tmp')
+        
+        # Load the ephemeris (DE421) directly from the backend folder to avoid massive download timeout
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        eph_path = os.path.join(BASE_DIR, 'de421.bsp')
+        self.eph = SpiceKernel(eph_path)
+        
+        # Load timescale (downloads tiny leap second files to /tmp)
         self.ts = load.timescale()
         self.earth = self.eph['earth']
         self.sun = self.eph['sun']
@@ -37,32 +46,41 @@ class FalakCalculator:
         f = almanac.sunrise_sunset(self.eph, wgs84.latlon(lat, lon))
         t, y = almanac.find_discrete(t0, t1, f)
         
-        # y=0 means sunset, y=1 means sunrise
         sunset_times = [ti for ti, yi in zip(t, y) if yi == 0]
-        
         if not sunset_times:
             sunset_t = self.ts.utc(dt.year, dt.month, dt.day, 18, 0, 0)
         else:
-            sunset_t = sunset_times[0]
+            sunset_t = sunset_times[-1]
             
-        # 1. Calculate positions at sunset
-        astrometric_sun = observer.at(sunset_t).observe(self.sun)
-        app_sun = astrometric_sun.apparent()
-        sun_alt, sun_az, _ = app_sun.altaz()
+        # 1. Calculate MABIMS Criteria exactly at sunset
+        astrometric_moon_sunset = observer.at(sunset_t).observe(self.moon)
+        app_moon_sunset = astrometric_moon_sunset.apparent()
+        moon_alt_sunset, _, _ = app_moon_sunset.altaz()
         
-        astrometric_moon = observer.at(sunset_t).observe(self.moon)
-        app_moon = astrometric_moon.apparent()
-        moon_alt, moon_az, _ = app_moon.altaz()
+        astrometric_sun_sunset = observer.at(sunset_t).observe(self.sun)
+        app_sun_sunset = astrometric_sun_sunset.apparent()
         
         # 2. ARCV (Arc of Vision) -> Moon Altitude at sunset
-        arcv = moon_alt.degrees
+        arcv = moon_alt_sunset.degrees
         
-        # 3. ARCL (Arc of Light) -> Elongation
-        elongation = app_sun.separation_from(app_moon).degrees
+        # 3. ARCL (Arc of Light) -> Elongation at sunset
+        elongation = app_sun_sunset.separation_from(app_moon_sunset).degrees
         arcl = elongation
         
-        # 4. Illumination Fraction
-        illumination = almanac.fraction_illuminated(self.eph, 'moon', sunset_t)
+        # 4. Calculate Global Positions for the requested time `dt` (Real-Time)
+        current_t = self.ts.from_datetime(dt)
+        
+        astrometric_sun = observer.at(current_t).observe(self.sun)
+        app_sun = astrometric_sun.apparent()
+        sun_alt, sun_az, _ = app_sun.altaz()
+        sun_ra, sun_dec, _ = app_sun.radec()
+        
+        astrometric_moon = observer.at(current_t).observe(self.moon)
+        app_moon = astrometric_moon.apparent()
+        moon_alt, moon_az, _ = app_moon.altaz()
+        moon_ra, moon_dec, _ = app_moon.radec()
+        
+        illumination = almanac.fraction_illuminated(self.eph, 'moon', current_t)
         
         # 5. MABIMS Criteria: Altitude > 3 deg, Elongation > 6.4 deg
         wujud = arcv > 0
@@ -79,19 +97,24 @@ class FalakCalculator:
         # A full cycle is ~29.53 days. 
         # For an exact calculation, one should find the last phase=0.
         
-        # Get Hijri Date
-        hijri_date = self.get_hijri_date(sunset_t.utc_datetime())
+        # Get Hijri Date for the requested time
+        hijri_date = self.get_hijri_date(current_t.utc_datetime())
         
-        # GMST in hours for Earth Rotation
-        gmst = sunset_t.gast
+        # GMST in hours for Earth Rotation at the requested time
+        gmst = current_t.gast
             
         return {
-            "time_utc": sunset_t.utc_datetime().isoformat(),
+            "time_utc": current_t.utc_datetime().isoformat(),
+            "sunset_utc": sunset_t.utc_datetime().isoformat(),
             "gmst_hours": gmst,
             "sun_alt": sun_alt.degrees,
             "sun_az": sun_az.degrees,
+            "sun_ra": sun_ra.hours,
+            "sun_dec": sun_dec.degrees,
             "moon_alt": moon_alt.degrees,
             "moon_az": moon_az.degrees,
+            "moon_ra": moon_ra.hours,
+            "moon_dec": moon_dec.degrees,
             "arcv": arcv,
             "arcl": arcl,
             "illumination": illumination,

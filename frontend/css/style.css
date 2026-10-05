@@ -84,8 +84,8 @@ html, body {
     z-index: 10;
     pointer-events: none;
     display: grid;
-    grid-template-rows: auto 1fr;
-    grid-template-columns: 300px 1fr 290px;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: 300px minmax(0, 1fr) 290px;
     grid-template-areas:
         "header header header"
         "left   center right";
@@ -111,10 +111,10 @@ html, body {
 }
 
 /* ── Scrollbar ───────────────────────────────────────────── */
-::-webkit-scrollbar          { width: 3px; height: 3px; }
+::-webkit-scrollbar          { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track    { background: transparent; }
-::-webkit-scrollbar-thumb    { background: rgba(255,255,255,0.15); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+::-webkit-scrollbar-thumb    { background: rgba(255,255,255,0.25); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
 
 /* ── Header ──────────────────────────────────────────────── */
 #app-header {
@@ -128,7 +128,8 @@ html, body {
     pointer-events: auto;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     min-height: 0;
 }
 

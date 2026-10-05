@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -20,9 +24,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-calc = FalakCalculator()
-cache = PredictiveCache(calc)
-geolocator = Nominatim(user_agent="FalakHub_App")
+calc = None
+cache = None
+
+def get_calculator():
+    global calc, cache
+    if calc is None:
+        calc = FalakCalculator()
+        cache = PredictiveCache(calc)
+    return calc, cache
 
 class HijriDate(BaseModel):
     day: int
@@ -32,11 +42,16 @@ class HijriDate(BaseModel):
 
 class EphemerisResponse(BaseModel):
     time_utc: str
+    sunset_utc: str
     gmst_hours: float
     sun_alt: float
     sun_az: float
+    sun_ra: float
+    sun_dec: float
     moon_alt: float
     moon_az: float
+    moon_ra: float
+    moon_dec: float
     arcv: float
     arcl: float
     illumination: float
@@ -45,23 +60,30 @@ class EphemerisResponse(BaseModel):
     hijri: HijriDate
 
 @app.get("/api/ephemeris", response_model=EphemerisResponse)
-async def get_ephemeris(lat: float, lon: float, date: str):
+async def get_ephemeris(lat: float, lon: float, date: str, timestamp: str = None):
     """
-    Get highly precise ephemeris data for a specific location at sunset for the given date.
-    Date format: YYYY-MM-DD
+    Get highly precise ephemeris data.
     """
     try:
-        dt = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-        data = calc.calculate_ephemeris(lat, lon, dt)
+        if timestamp:
+            try:
+                dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            except:
+                dt = datetime.now(timezone.utc)
+        else:
+            dt = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            
+        c, ca = get_calculator()
+        data = c.calculate_ephemeris(lat, lon, dt)
         
         # Log query for AI caching mechanism
-        cache.train([[lat, lon]])
+        ca.train([[lat, lon]])
         
         return data
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"INIT/RUNTIME ERROR: {str(e)}")
 
 @app.get("/api/map/mabims")
 async def get_mabims_map(date: str):
@@ -72,10 +94,11 @@ async def get_mabims_map(date: str):
     try:
         dt = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
         # Using a coarse resolution for the demo.
-        pbf_data = cache.generate_global_grid(dt, resolution=5)
+        c, ca = get_calculator()
+        pbf_data = ca.generate_global_grid(dt, resolution=5)
         return Response(content=pbf_data, media_type="application/x-protobuf")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"ERROR: {str(e)}")
 
 @app.get("/api/search")
 async def search_location(q: str):
@@ -83,6 +106,8 @@ async def search_location(q: str):
     Search for a city/location and get its coordinates.
     """
     try:
+        from geopy.geocoders import Nominatim
+        geolocator = Nominatim(user_agent="FalakHub_App")
         location = geolocator.geocode(q)
         if location:
             return {

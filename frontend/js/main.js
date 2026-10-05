@@ -23,8 +23,12 @@ let appState = {
     baseTime:     new Date(),
     baseSunAlt:   -10,
     baseSunAz:    270,
+    baseSunRa:    0,
+    baseSunDec:   0,
     baseMoonAlt:   5,
     baseMoonAz:   285,
+    baseMoonRa:   0,
+    baseMoonDec:  0,
     baseArcl:      0,
     baseArcv:      0,
     baseGMST:      0,
@@ -115,6 +119,7 @@ function setupUI() {
 
         if (location) {
             CITIES.push(location);
+            if (globe) globe.addMarker(location.lat, location.lon);
             renderCityDropdown();
             await selectCity(CITIES.length - 1);
             $('city-search-input').value = '';
@@ -123,6 +128,63 @@ function setupUI() {
             setText('api-status-text', 'Lokasi tidak ditemukan');
             setTimeout(() => setApiState('ok'), 3000);
         }
+    });
+
+    // GPS / Current Location
+    let myLocationIdx = null;
+    $('btn-gps')?.addEventListener('click', () => {
+        if (myLocationIdx !== null && CITIES[myLocationIdx]) {
+            // Already have location, just pan to it
+            if (appState.activeCityIdx === myLocationIdx) {
+                if (globe) globe.focusCity(myLocationIdx);
+            } else {
+                selectCity(myLocationIdx);
+            }
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            alert('Browser Anda tidak mendukung deteksi lokasi (GPS).');
+            return;
+        }
+
+        setApiState('syncing');
+        setText('api-status-text', 'Mencari Satelit GPS…');
+        const icon = $('btn-gps').querySelector('i');
+        if (icon) icon.className = 'fas fa-spinner fa-spin';
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                try {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    let name = "Lokasi Saya";
+                    
+                    const rev = await reverseGeocodeNominatim(lat, lon);
+                    if (rev) name = rev;
+
+                    CITIES.push({ name, lat, lon });
+                    if (globe) globe.addMarker(lat, lon);
+                    myLocationIdx = CITIES.length - 1;
+                    renderCityDropdown();
+                    await selectCity(myLocationIdx);
+                } catch (err) {
+                    console.error("Error during GPS selectCity:", err);
+                    setApiState('error');
+                    setText('api-status-text', 'Gagal memproses data lokasi');
+                    setTimeout(() => setApiState('ok'), 3000);
+                } finally {
+                    if (icon) icon.className = 'fas fa-crosshairs';
+                }
+            },
+            (err) => {
+                setApiState('error');
+                setText('api-status-text', 'Akses GPS Gagal/Ditolak');
+                setTimeout(() => setApiState('ok'), 3000);
+                if (icon) icon.className = 'fas fa-crosshairs';
+            },
+            { enableHighAccuracy: true, timeout: 15000 }
+        );
     });
 
     // Reset skydome camera
@@ -135,6 +197,7 @@ function setupUI() {
         const name = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`;
         const loc  = { name, lat, lon };
         CITIES.push(loc);
+        if (globe) globe.addMarker(lat, lon);
         renderCityDropdown();
         selectCity(CITIES.length - 1);
     };
@@ -174,8 +237,11 @@ function setupUI() {
 // ── Nominatim Geocoder Fallback ───────────────────────────────
 async function geocodeNominatim(query) {
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
-        const res = await fetch(url, { headers: { 'Accept-Language': 'id,en' } });
+        const res = await fetch(url, { headers: { 'Accept-Language': 'id,en' }, signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!res.ok) return null;
         const data = await res.json();
         if (!data.length) return null;
@@ -184,6 +250,25 @@ async function geocodeNominatim(query) {
             lat:  parseFloat(data[0].lat),
             lon:  parseFloat(data[0].lon),
         };
+    } catch { return null; }
+}
+
+async function reverseGeocodeNominatim(lat, lon) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'id,en' }, signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data && data.address) {
+            const city = data.address.city || data.address.town || data.address.village || data.address.county;
+            const state = data.address.state || data.address.country;
+            if (city && state) return `${city}, ${state}`;
+            return data.display_name.split(',').slice(0, 2).join(',').trim();
+        }
+        return null;
     } catch { return null; }
 }
 
@@ -237,14 +322,28 @@ async function syncData() {
     setApiState('syncing');
     setText('api-status-text', 'Sinkronisasi…');
 
-    const data = await fetchEphemeris(city.lat, city.lon, appState.date);
+    // If the selected date is today, use current time, else use noon UTC on that date
+    const todayStr = new Date().toISOString().split('T')[0];
+    let ts;
+    if (appState.date === todayStr) {
+        ts = new Date().toISOString();
+    } else {
+        ts = new Date(appState.date + "T12:00:00Z").toISOString();
+    }
+
+    const data = await fetchEphemeris(city.lat, city.lon, appState.date, ts);
 
     if (data) {
         appState.baseTime      = new Date(data.time_utc);
+        appState.sunsetTime    = new Date(data.sunset_utc);
         appState.baseSunAlt    = data.sun_alt  ?? 0;
         appState.baseSunAz     = data.sun_az   ?? 270;
+        appState.baseSunRa     = data.sun_ra   ?? 0;
+        appState.baseSunDec    = data.sun_dec  ?? 0;
         appState.baseMoonAlt   = data.moon_alt ?? 5;
         appState.baseMoonAz    = data.moon_az  ?? 285;
+        appState.baseMoonRa    = data.moon_ra  ?? 0;
+        appState.baseMoonDec   = data.moon_dec ?? 0;
         appState.baseArcl      = data.arcl     ?? 0;
         appState.baseArcv      = data.arcv     ?? 0;
         appState.baseGMST      = data.gmst_hours ?? 0;
@@ -255,8 +354,8 @@ async function syncData() {
         if (globe) {
             globe.setEphemeris(
                 appState.baseGMST,
-                appState.baseSunAlt,  appState.baseSunAz,
-                appState.baseMoonAlt, appState.baseMoonAz
+                appState.baseSunRa,  appState.baseSunDec,
+                appState.baseMoonRa, appState.baseMoonDec
             );
         }
 
@@ -291,9 +390,11 @@ function updateUI() {
     setText('val-time', activeTime.toLocaleTimeString('id-ID', {
         hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC'
     }) + ' UTC');
-    setText('val-sunset', appState.baseTime.toLocaleTimeString('id-ID', {
-        hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
-    }) + ' UTC');
+    if (appState.sunsetTime) {
+        setText('val-sunset', appState.sunsetTime.toLocaleTimeString('id-ID', {
+            hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
+        }) + ' UTC');
+    }
 
     // Interpolated values for time slider
     const sAlt = appState.baseSunAlt  - offsetH * 15;
@@ -327,7 +428,7 @@ function updateUI() {
     // Update globe with interpolated positions on slider move
     if (globe) {
         const activeGMST = appState.baseGMST + offsetH;
-        globe.setEphemeris(activeGMST, sAlt, sAz, mAlt, mAz);
+        globe.setEphemeris(activeGMST, appState.baseSunRa, appState.baseSunDec, appState.baseMoonRa, appState.baseMoonDec);
     }
 
     // Status Card

@@ -1,7 +1,12 @@
-export const API_BASE = "https://3eb766dd4c8729.lhr.life/api";
-export async function fetchEphemeris(lat, lon, date) {
+export const API_BASE = "/api";
+export async function fetchEphemeris(lat, lon, date, timestamp) {
     try {
-        const res = await fetch(`${API_BASE}/ephemeris?lat=${lat}&lon=${lon}&date=${date}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        let url = `${API_BASE}/ephemeris?lat=${lat}&lon=${lon}&date=${date}`;
+        if (timestamp) url += `&timestamp=${encodeURIComponent(timestamp)}`;
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!res.ok) throw new Error("API Error");
         return await res.json();
     } catch (e) {

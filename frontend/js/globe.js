@@ -454,15 +454,18 @@ export function initGlobe(container, cities, onCitySelect) {
     const targetSunPos  = new THREE.Vector3(120, 0, 0);
     const targetMoonPos = new THREE.Vector3(18, 0, 0);
 
-    // Spherical-to-Cartesian: astronomical alt/az → THREE.Vector3
-    function altAzToVec3(altDeg, azDeg, radius) {
-        const alt = THREE.MathUtils.degToRad(altDeg);
-        const az  = THREE.MathUtils.degToRad(azDeg);
-        return new THREE.Vector3(
-             radius * Math.cos(alt) * Math.sin(az),
-             radius * Math.sin(alt),
-            -radius * Math.cos(alt) * Math.cos(az)
-        );
+    // Celestial Coordinates (RA/Dec) to World Space
+    // RA is in hours (0-24), Dec is in degrees.
+    // Earth rotates by GMST around Y axis.
+    // RA=0 matches -X in world space when GMST=0.
+    function raDecToVec3(raHours, decDeg, radius) {
+        const ra  = THREE.MathUtils.degToRad(raHours * 15);
+        const dec = THREE.MathUtils.degToRad(decDeg);
+        const y = radius * Math.sin(dec);
+        const rXZ = radius * Math.cos(dec);
+        const x = -rXZ * Math.cos(ra);
+        const z = -rXZ * Math.sin(ra);
+        return new THREE.Vector3(x, y, z);
     }
 
     // ── Animate Loop (on-demand) ──────────────────────────────────
@@ -557,15 +560,15 @@ export function initGlobe(container, cities, onCitySelect) {
             requestRender();
         },
 
-        setEphemeris(gmst_hours, sunAlt, sunAz, moonAlt, moonAz) {
+        setEphemeris(gmst_hours, sun_ra, sun_dec, moon_ra, moon_dec) {
             // Absolute Earth rotation from GMST
             targetEarthAngle = (gmst_hours / 24) * Math.PI * 2 + Math.PI;
 
-            // Absolute Sun position from alt/az
-            targetSunPos.copy(altAzToVec3(sunAlt, sunAz, 120));
+            // Absolute Sun position from RA/Dec
+            targetSunPos.copy(raDecToVec3(sun_ra, sun_dec, 120));
 
-            // Absolute Moon position from alt/az
-            targetMoonPos.copy(altAzToVec3(moonAlt, moonAz, 18));
+            // Absolute Moon position from RA/Dec
+            targetMoonPos.copy(raDecToVec3(moon_ra, moon_dec, 18));
 
             // Reorient orbit guide rings
             tiltOrbitToPoint(sunOrbitLine,  targetSunPos);
