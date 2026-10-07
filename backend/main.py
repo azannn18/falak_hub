@@ -62,7 +62,7 @@ class EphemerisResponse(BaseModel):
     hijri: HijriDate
 
 @app.get("/api/ephemeris", response_model=EphemerisResponse)
-async def get_ephemeris(lat: float, lon: float, date: str, timestamp: str = None):
+def get_ephemeris(lat: float, lon: float, date: str, timestamp: str = None):
     """
     Get highly precise ephemeris data.
     """
@@ -88,22 +88,22 @@ async def get_ephemeris(lat: float, lon: float, date: str, timestamp: str = None
         raise HTTPException(status_code=400, detail=f"INIT/RUNTIME ERROR: {str(e)}")
 
 @app.get("/api/map/mabims")
-async def get_mabims_map(date: str):
+def get_mabims_map(date: str):
     """
     Returns a global grid of MABIMS visibility for the given date.
     Response is Geobuf encoded for spatial Big Data optimization.
     """
     try:
         dt = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-        # Using a coarse resolution for the demo.
+        # Menggunakan resolusi 10 agar lebih ringan dan tidak timeout (terutama di Vercel/lokal)
         c, ca = get_calculator()
-        pbf_data = ca.generate_global_grid(dt, resolution=5)
+        pbf_data = ca.generate_global_grid(dt, resolution=10)
         return Response(content=pbf_data, media_type="application/x-protobuf")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"ERROR: {str(e)}")
 
 @app.get("/api/search")
-async def search_location(q: str):
+def search_location(q: str):
     """
     Search for a city/location and get its coordinates.
     """
@@ -141,6 +141,21 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+esp32_telemetry = {
+    "status": "disconnected",
+    "azimuth": 0.0,
+    "altitude": 0.0,
+    "cal_sys": 0,
+    "cal_gyro": 0,
+    "cal_accel": 0,
+    "cal_mag": 0,
+    "last_update": None
+}
+
+@app.get("/api/telemetry")
+def get_telemetry():
+    return esp32_telemetry
+
 class TargetCoordinates(BaseModel):
     target_azimuth: float
     target_altitude: float
@@ -148,13 +163,32 @@ class TargetCoordinates(BaseModel):
 @app.websocket("/ws/esp32")
 async def websocket_esp32(websocket: WebSocket):
     await manager.connect(websocket)
+    global esp32_telemetry
+    esp32_telemetry["status"] = "connected"
     try:
         while True:
             # Tetap listen untuk menangkap pesan jika ESP32 mengirim balasan / telemetry
             data = await websocket.receive_text()
-            print(f"Pesan dari ESP32: {data}")
+            try:
+                parsed = json.loads(data)
+                if parsed.get("type") == "telemetry":
+                    esp32_telemetry.update({
+                        "status": "connected",
+                        "azimuth": parsed.get("azimuth", 0.0),
+                        "altitude": parsed.get("altitude", 0.0),
+                        "cal_sys": parsed.get("cal_sys", 0),
+                        "cal_gyro": parsed.get("cal_gyro", 0),
+                        "cal_accel": parsed.get("cal_accel", 0),
+                        "cal_mag": parsed.get("cal_mag", 0),
+                        "last_update": datetime.now().isoformat()
+                    })
+                elif parsed.get("status") == "ESP32_READY":
+                    esp32_telemetry["status"] = "connected"
+            except:
+                pass
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+        esp32_telemetry["status"] = "disconnected"
 
 @app.post("/api/point-hilal")
 async def point_hilal(target: TargetCoordinates):
@@ -167,5 +201,13 @@ async def point_hilal(target: TargetCoordinates):
     await manager.broadcast(json.dumps(payload))
     return {"status": "success", "message": "Command POINT_HILAL berhasil dikirim ke ESP32", "payload": payload}
 
+from fastapi.staticfiles import StaticFiles
+
+# Serve frontend statis untuk penggunaan lokal (di luar Vercel)
+import os
+frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+if os.path.exists(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

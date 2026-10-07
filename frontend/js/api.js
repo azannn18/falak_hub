@@ -42,3 +42,13 @@ export async function fetchGeocode(query) {
         return null;
     }
 }
+
+export async function fetchTelemetry() {
+    try {
+        const res = await fetch(`${API_BASE}/telemetry`);
+        if (!res.ok) throw new Error("API Error");
+        return await res.json();
+    } catch (e) {
+        return null;
+    }
+}

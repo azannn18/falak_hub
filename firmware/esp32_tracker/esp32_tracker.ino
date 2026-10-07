@@ -9,11 +9,11 @@
 // ==========================================
 // 1. KONFIGURASI JARINGAN & SERVER
 // ==========================================
-const char* ssid = "YOUR_WIFI_SSID";           // MASUKKAN NAMA WIFI ANDA
-const char* password = "YOUR_WIFI_PASSWORD";   // MASUKKAN PASSWORD WIFI ANDA
+const char* ssid = "Infinix NOTE 50 Pro";           // MASUKKAN NAMA WIFI ANDA
+const char* password = "kontolbaru";   // MASUKKAN PASSWORD WIFI ANDA
 
 // Ganti dengan IP Address Komputer (tempat backend FastAPI berjalan)
-const char* websocket_server = "192.168.1.X"; 
+const char* websocket_server = "10.230.249.223"; 
 const uint16_t websocket_port = 8000;         
 const char* websocket_path = "/ws/esp32";     
 
@@ -22,28 +22,30 @@ WebSocketsClient webSocket;
 // ==========================================
 // 2. OBJEK HARDWARE (BNO055 & STEPPER)
 // ==========================================
-// Inisialisasi Sensor BNO055 (Menggunakan Pin I2C ESP32 standar: SDA=21, SCL=22)
-Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
+// Inisialisasi Sensor BNO055
+// Modul GY-BNO055 biasanya menggunakan alamat 0x29. Jika menggunakan modul asli Adafruit, gunakan 0x28.
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x29);
 
 // Definisi Pin Motor Stepper 1 (Azimuth / Horizontal)
 #define motorAzPin1 19
 #define motorAzPin2 18
 #define motorAzPin3 5
-#define motorAzPin4 17
-// Urutan pin untuk modul 28BYJ-48 dengan driver ULN2003 biasanya 1-3-2-4
+#define motorAzPin4 23
+// Urutan pin untuk modul 28BYJ-48 dengan driver ULN2003 biasanya IN1, IN3, IN2, IN4
 AccelStepper stepperAzimuth(AccelStepper::HALF4WIRE, motorAzPin1, motorAzPin3, motorAzPin2, motorAzPin4);
 
-// Definisi Pin Motor Stepper 2 (Altitude / Vertikal)
-#define motorAltPin1 16
-#define motorAltPin2 4
-#define motorAltPin3 2
-#define motorAltPin4 15
+// Definisi Pin Motor Stepper 2 (Altitude / Vertikal) - Sesuai panduan Anda
+#define motorAltPin1 26
+#define motorAltPin2 25
+#define motorAltPin3 33
+#define motorAltPin4 32
 AccelStepper stepperAltitude(AccelStepper::HALF4WIRE, motorAltPin1, motorAltPin3, motorAltPin2, motorAltPin4);
 
 // Variabel untuk menyimpan pembacaan sensor orientasi saat ini
 float current_azimuth = 0.0;
 float current_altitude = 0.0;
 unsigned long lastSensorRead = 0;
+unsigned long lastTelemetrySend = 0;
 
 // Konversi Derajat ke Step (Motor 28BYJ-48 mode HALF4WIRE memiliki 4096 step/revolusi)
 // Jadi 1 Derajat = 4096 / 360 = 11.377 step
@@ -104,11 +106,17 @@ void loop() {
     stepperAzimuth.run();
     stepperAltitude.run();
 
-    // Membaca BNO055 tiap 100ms (10 kali per detik)
+    // Membaca BNO055 tiap 100ms (10 kali per detik) untuk update motor
     unsigned long currentMillis = millis();
     if (currentMillis - lastSensorRead >= 100) {
         lastSensorRead = currentMillis;
         readSensor();
+    }
+
+    // Kirim telemetri ke server tiap 1 detik agar tidak memberatkan jaringan
+    if (currentMillis - lastTelemetrySend >= 1000) {
+        lastTelemetrySend = currentMillis;
+        sendTelemetry();
     }
 }
 
@@ -175,9 +183,10 @@ void setTargetPosition(float target_az, float target_alt) {
 
     Serial.printf("[Motor] Berputar %ld langkah Azimuth, %ld langkah Altitude\n", stepsToMoveAzimuth, stepsToMoveAltitude);
 
-    // 3. Perintahkan AccelStepper bergerak secara RELATIF
-    stepperAzimuth.move(stepsToMoveAzimuth);
-    stepperAltitude.move(stepsToMoveAltitude);
+    // 3. Perintahkan AccelStepper bergerak ke target ABSOLUT dari posisi saat ini.
+    // Jika tombol ditekan berulang-ulang, target tidak akan menumpuk (bertambah terus).
+    stepperAzimuth.moveTo(stepperAzimuth.currentPosition() + stepsToMoveAzimuth);
+    stepperAltitude.moveTo(stepperAltitude.currentPosition() + stepsToMoveAltitude);
 }
 
 void readSensor() {
@@ -189,9 +198,18 @@ void readSensor() {
     // event.orientation.y atau z adalah kemiringan (Pitch/Roll), tergantung orientasi modul saat dipasang
     current_azimuth = event.orientation.x; 
     current_altitude = event.orientation.y; 
+    current_azimuth = event.orientation.x; 
+    current_altitude = event.orientation.y; 
+}
+
+void sendTelemetry() {
+    // Baca status kalibrasi (0 = Buruk/Belum, 3 = Sangat Baik)
+    uint8_t system, gyro, accel, mag = 0;
+    bno.getCalibration(&system, &gyro, &accel, &mag);
     
-    // (Opsional) Mengirim data telemetri ke server agar web tau posisi alat saat ini
-    // char telemetry[100];
-    // sprintf(telemetry, "{\"type\":\"telemetry\",\"current_azimuth\":%.2f,\"current_altitude\":%.2f}", current_azimuth, current_altitude);
-    // webSocket.sendTXT(telemetry);
+    // Kirim data telemetri ke server
+    char telemetry[200];
+    sprintf(telemetry, "{\"type\":\"telemetry\",\"azimuth\":%.2f,\"altitude\":%.2f,\"cal_sys\":%d,\"cal_gyro\":%d,\"cal_accel\":%d,\"cal_mag\":%d}", 
+            current_azimuth, current_altitude, system, gyro, accel, mag);
+    webSocket.sendTXT(telemetry);
 }

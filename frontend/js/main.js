@@ -1,6 +1,6 @@
 import { initGlobe }   from './globe.js';
 import { initSkydome }  from './skydome.js';
-import { fetchEphemeris, fetchMabimsMap, fetchGeocode } from './api.js';
+import { fetchEphemeris, fetchMabimsMap, fetchGeocode, fetchTelemetry } from './api.js';
 
 /* ═══════════════════════════════════════════════════════════════
    FalakHub · main.js
@@ -523,6 +523,43 @@ function setApiState(state) {
     }
 }
 
+// ── BNO055 Telemetry Updater ──────────────────────────────────
+async function updateTelemetryUI() {
+    const data = await fetchTelemetry();
+    if (!data) return;
+
+    if (data.status === 'connected') {
+        setText('tel-azimuth', `${data.azimuth.toFixed(2)}°`);
+        setText('tel-altitude', `${data.altitude.toFixed(2)}°`);
+        
+        const updateCal = (id, val) => {
+            const el = $(id);
+            if (el) {
+                el.textContent = `${val}/3`;
+                el.style.color = val === 3 ? '#10B981' : (val > 0 ? '#F59E0B' : '#EF4444');
+            }
+        };
+        updateCal('cal-sys', data.cal_sys);
+        updateCal('cal-gyro', data.cal_gyro);
+        updateCal('cal-accel', data.cal_accel);
+        updateCal('cal-mag', data.cal_mag);
+        
+        const ts = $('tracker-status');
+        if (ts && ts.innerText.includes("Menunggu")) {
+            ts.innerText = "Status: ESP32 Terhubung & Siap";
+            ts.style.color = "#10B981";
+        }
+    } else {
+        setText('tel-azimuth', `--`);
+        setText('tel-altitude', `--`);
+        const ts = $('tracker-status');
+        if (ts && !ts.innerText.includes("Mengirim") && !ts.innerText.includes("Berhasil")) {
+            ts.innerText = "Status: ESP32 Terputus / Tidak Aktif";
+            ts.style.color = "#EF4444";
+        }
+    }
+}
+
 // ── Loading Screen Dismissal ──────────────────────────────────
 function hideLoading() {
     const ls = $('loading-screen');
@@ -550,4 +587,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Show loading screen for at least 800ms for dramatic effect
     setTimeout(hideLoading, 900);
+
+    // Start telemetry polling loop
+    setInterval(updateTelemetryUI, 1000);
 });

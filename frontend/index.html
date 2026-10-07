@@ -277,6 +277,40 @@
                 </div>
             </div>
 
+            <!-- Telemetry BNO055 -->
+            <div class="glass-panel" style="padding:16px;border-radius:16px;">
+                <div class="section-label mb-3">Sensor Orientasi BNO055</div>
+                
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-size:11px;color:var(--c-muted);">Azimuth Teleskop</span>
+                    <span id="tel-azimuth" style="font-size:12px;font-weight:600;color:#F59E0B;font-family:'JetBrains Mono',monospace;">0.00°</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                    <span style="font-size:11px;color:var(--c-muted);">Altitude Teleskop</span>
+                    <span id="tel-altitude" style="font-size:12px;font-weight:600;color:#F59E0B;font-family:'JetBrains Mono',monospace;">0.00°</span>
+                </div>
+                
+                <div class="divider" style="margin:8px 0;"></div>
+                <div style="font-size:10px;font-weight:600;color:var(--c-muted);margin-bottom:8px;text-transform:uppercase;">Status Kalibrasi (0=Buruk, 3=Sempurna)</div>
+                
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;">
+                    <span style="color:var(--c-muted);">System</span>
+                    <span id="cal-sys" style="font-family:'JetBrains Mono',monospace;">0/3</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;">
+                    <span style="color:var(--c-muted);">Gyroscope</span>
+                    <span id="cal-gyro" style="font-family:'JetBrains Mono',monospace;">0/3</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;">
+                    <span style="color:var(--c-muted);">Accelerometer</span>
+                    <span id="cal-accel" style="font-family:'JetBrains Mono',monospace;">0/3</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;">
+                    <span style="color:var(--c-muted);">Magnetometer <i class="fas fa-compass"></i></span>
+                    <span id="cal-mag" style="font-weight:700;font-family:'JetBrains Mono',monospace;color:#EF4444;">0/3</span>
+                </div>
+            </div>
+
             <!-- Map Legend -->
             <div class="glass-panel" style="padding:16px;border-radius:16px;">
                 <div class="section-label mb-3">Legenda Peta Global</div>
