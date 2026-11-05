@@ -1,6 +1,7 @@
 import { initGlobe }   from './globe.js';
 import { initSkydome }  from './skydome.js';
 import { fetchEphemeris, fetchMabimsMap, fetchGeocode, fetchTelemetry } from './api.js';
+import { initMqttBridge, sendMqttCommand, isMqttConnected } from './mqtt-bridge.js';
 
 /* ═══════════════════════════════════════════════════════════════
    HILTRON · main.js
@@ -437,9 +438,29 @@ function setupUI() {
             target_altitude: parseFloat(mAlt.toFixed(2))
         };
 
-        trackerStatus.innerText = "Status: Mengirim perintah ke Server...";
+        const altNote = targetData.target_altitude < 0 
+            ? `\n(Hilal di bawah ufuk, teleskop diarahkan ke ufuk barat 0°)` 
+            : '';
+
+        trackerStatus.innerText = "Status: Mengirim instruksi ke Teleskop...";
         trackerStatus.style.color = "#3B82F6"; // Blue
 
+        // 1. Coba kirim instan melalui EMQX Cloud MQTT (Web Vercel -> ESP32)
+        if (isMqttConnected()) {
+            const sent = sendMqttCommand({
+                command: 'POINT_HILAL',
+                target_azimuth: targetData.target_azimuth,
+                target_altitude: targetData.target_altitude
+            });
+            if (sent) {
+                trackerStatus.style.color = "#10B981";
+                trackerStatus.innerText = `Status: Terkirim via EMQX Cloud MQTT!\nTarget: Azimuth ${targetData.target_azimuth}°, Altitude ${targetData.target_altitude}°${altNote}`;
+                showToast(`Target Hilal Terkirim ke ESP32! (Az: ${targetData.target_azimuth}°, Alt: ${targetData.target_altitude}°)`, "success");
+                return;
+            }
+        }
+
+        // 2. Fallback via Local REST API jika MQTT belum terhubung
         try {
             // Kita gunakan API_BASE yang sama dengan ephemeris
             const { API_BASE } = await import('./api.js');
@@ -456,12 +477,9 @@ function setupUI() {
             if (response.ok) {
                 if (result.status === 'warning') {
                     trackerStatus.style.color = "#F59E0B"; // Orange
-                    trackerStatus.innerText = `Status: ESP32 Belum Terhubung!\nPeriksa Wi-Fi & WebSocket ESP32.`;
+                    trackerStatus.innerText = `Status: ESP32 Belum Terhubung!\nPeriksa koneksi Wi-Fi ESP32.`;
                 } else {
                     trackerStatus.style.color = "#10B981"; // Green
-                    const altNote = targetData.target_altitude < 0 
-                        ? `\n(Hilal di bawah ufuk, teleskop diarahkan ke ufuk barat 0°)` 
-                        : '';
                     trackerStatus.innerText = `Status: Berhasil Terkirim!\nTarget: Azimuth ${targetData.target_azimuth}°, Altitude ${targetData.target_altitude}°${altNote}`;
                 }
             } else {
@@ -482,6 +500,21 @@ function setupUI() {
             trackerStatus.innerText = "Status: Mengirim instruksi Kalibrasi Titik Nol ke ESP32...";
             trackerStatus.style.color = "#3B82F6";
         }
+
+        // 1. Coba kirim via EMQX Cloud MQTT
+        if (isMqttConnected()) {
+            const sent = sendMqttCommand({ command: 'SET_HOME' });
+            if (sent) {
+                if (trackerStatus) {
+                    trackerStatus.style.color = "#10B981";
+                    trackerStatus.innerText = "Status: Titik Nol Berhasil Ditetapkan via Cloud MQTT!\n(Posisi saat ini = 0° Hadap Utara & 0° Ufuk Datar)";
+                }
+                showToast("Titik Nol (Home) Berhasil Ditetapkan!", "success");
+                return;
+            }
+        }
+
+        // 2. Fallback via Local HTTP
         try {
             const { API_BASE } = await import('./api.js');
             const res = await fetch(`${API_BASE}/set-home`, { method: 'POST' });
@@ -522,6 +555,41 @@ function setupUI() {
             calMsg.style.color = '#93C5FD';
             calMsg.style.border = '1px solid rgba(59, 130, 246, 0.3)';
             calMsg.innerHTML = `<i class="fas fa-satellite-dish fa-spin" style="margin-right:6px;"></i> Mengirim instruksi rekam ke Flash NVS ESP32...`;
+        }
+
+        // 1. Coba kirim via EMQX Cloud MQTT
+        if (isMqttConnected()) {
+            const sent = sendMqttCommand({ command: 'SAVE_CALIBRATION' });
+            if (sent) {
+                btnSaveCalib.innerHTML = `<i class="fas fa-check-circle"></i> Berhasil Direkam & Dikunci!`;
+                btnSaveCalib.style.background = '#059669';
+                btnSaveCalib.style.color = '#FFFFFF';
+                btnSaveCalib.style.border = '1px solid #10B981';
+                
+                if (calBadge) {
+                    calBadge.innerHTML = '<i class="fas fa-shield-alt"></i> EEPROM TERKUNCI';
+                    calBadge.style.background = 'rgba(16,185,129,0.2)';
+                    calBadge.style.color = '#10B981';
+                    calBadge.style.border = '1px solid rgba(16,185,129,0.4)';
+                }
+
+                if (calMsg) {
+                    calMsg.style.display = 'block';
+                    calMsg.style.background = 'rgba(16, 185, 129, 0.2)';
+                    calMsg.style.color = '#10B981';
+                    calMsg.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+                    calMsg.innerHTML = `<i class="fas fa-check-circle" style="margin-right:6px;"></i> <strong>SUKSES:</strong> Kalibrasi 3/3/3/3 berhasil disimpan permanen ke Flash NVS ESP32 via Cloud MQTT!`;
+                }
+
+                showToast("Kalibrasi Berhasil Direkam ke EEPROM via Cloud MQTT! (Terkunci)", "success");
+                setTimeout(() => {
+                    btnSaveCalib.disabled = false;
+                    btnSaveCalib.innerHTML = originalHtml;
+                    btnSaveCalib.style.background = 'rgba(16,185,129,0.15)';
+                    btnSaveCalib.style.color = '#10B981';
+                }, 6000);
+                return;
+            }
         }
 
         try {
@@ -607,6 +675,28 @@ function setupUI() {
         
         const calMsg = $('cal-status-msg');
         const calBadge = $('cal-locked-badge');
+
+        // 1. Coba kirim via EMQX Cloud MQTT
+        if (isMqttConnected()) {
+            const sent = sendMqttCommand({ command: 'CLEAR_CALIBRATION' });
+            if (sent) {
+                if (calBadge) {
+                    calBadge.innerHTML = '<i class="fas fa-unlock"></i> BELUM TERSIMPAN';
+                    calBadge.style.background = 'rgba(239,68,68,0.15)';
+                    calBadge.style.color = '#EF4444';
+                    calBadge.style.border = '1px solid rgba(239,68,68,0.3)';
+                }
+                if (calMsg) {
+                    calMsg.style.display = 'block';
+                    calMsg.style.background = 'rgba(245, 158, 11, 0.15)';
+                    calMsg.style.color = '#F59E0B';
+                    calMsg.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+                    calMsg.innerHTML = `<i class="fas fa-rotate-left" style="margin-right:6px;"></i> Profil kalibrasi di EEPROM NVS berhasil dihapus via Cloud MQTT.`;
+                }
+                showToast("Profil EEPROM berhasil di-reset via Cloud MQTT.", "warning");
+                return;
+            }
+        }
         
         try {
             const { API_BASE } = await import('./api.js');
@@ -986,19 +1076,20 @@ function setApiState(state) {
 // ── Hardware Telemetry & GPS Updater ──────────────────────────
 let latestGpsData = null;
 
-async function updateTelemetryUI() {
-    const data = await fetchTelemetry();
+export function renderTelemetryData(data) {
     if (!data) return;
 
-    if (data.status === 'connected') {
-        setText('tel-azimuth', `${data.azimuth.toFixed(2)}°`);
-        setText('tel-altitude', `${data.altitude.toFixed(2)}°`);
+    if (data.status === 'connected' || data.type === 'telemetry') {
+        const azVal = (typeof data.azimuth === 'number') ? data.azimuth.toFixed(2) : (data.azimuth ?? '0.00');
+        const altVal = (typeof data.altitude === 'number') ? data.altitude.toFixed(2) : (data.altitude ?? '0.00');
+        setText('tel-azimuth', `${azVal}°`);
+        setText('tel-altitude', `${altVal}°`);
         
         const isLocked = Boolean(data.cal_locked);
-        const effectiveSys   = isLocked ? 3 : data.cal_sys;
-        const effectiveGyro  = isLocked ? 3 : data.cal_gyro;
-        const effectiveAccel = isLocked ? 3 : data.cal_accel;
-        const effectiveMag   = isLocked ? 3 : data.cal_mag;
+        const effectiveSys   = isLocked ? 3 : (data.cal_sys ?? 0);
+        const effectiveGyro  = isLocked ? 3 : (data.cal_gyro ?? 0);
+        const effectiveAccel = isLocked ? 3 : (data.cal_accel ?? 0);
+        const effectiveMag   = isLocked ? 3 : (data.cal_mag ?? 0);
 
         const updateCal = (id, val) => {
             const el = $(id);
@@ -1016,7 +1107,7 @@ async function updateTelemetryUI() {
         const calBadge = $('cal-locked-badge');
         const calNotice = $('cal-locked-notice');
         if (calBadge) {
-            if (data.cal_locked) {
+            if (isLocked) {
                 calBadge.innerHTML = '<i class="fas fa-shield-alt"></i> EEPROM TERKUNCI';
                 calBadge.style.background = 'rgba(16,185,129,0.2)';
                 calBadge.style.color = '#10B981';
@@ -1033,7 +1124,11 @@ async function updateTelemetryUI() {
             }
         }
 
-        // Update Hardware GPS Telemetry (hanya update jika modul hardware mendapatkan data fix)
+        // Update Hardware GPS Telemetry
+        const sats = $('gps-sats');
+        const badge = $('gps-lock-badge');
+        const btnGps = $('btn-apply-gps');
+
         if (data.gps_valid) {
             latestGpsData = { lat: data.gps_lat, lon: data.gps_lon };
             setText('gps-lat', `${data.gps_lat.toFixed(5)}°`);
@@ -1077,6 +1172,15 @@ async function updateTelemetryUI() {
     }
 }
 
+async function updateTelemetryUI() {
+    // Lewati polling HTTP jika sudah terkoneksi langsung via Cloud MQTT
+    if (isMqttConnected()) return;
+
+    const data = await fetchTelemetry();
+    if (!data) return;
+    renderTelemetryData(data);
+}
+
 // ── Loading Screen Dismissal ──────────────────────────────────
 function hideLoading() {
     const ls = $('loading-screen');
@@ -1108,6 +1212,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Start dynamic simulation loop (smooth 100ms updates)
     setInterval(tickSimulation, 100);
 
-    // Start telemetry polling loop
+    // Inisialisasi MQTT Cloud Bridge untuk Vercel / Remote IoT
+    initMqttBridge({
+        onTelemetry: (data) => {
+            renderTelemetryData(data);
+        },
+        onStatusChange: (isOnline) => {
+            const ts = $('tracker-status');
+            if (ts) {
+                if (isOnline) {
+                    if (ts.innerText.includes("Offline") || ts.innerText.includes("Menunggu") || ts.innerText.includes("Terputus")) {
+                        ts.innerText = "Status: Terhubung ke Broker EMQX (Siap)";
+                        ts.style.color = "#10B981";
+                    }
+                } else {
+                    if (!ts.innerText.includes("Mengirim")) {
+                        ts.innerText = "Status: Menunggu Sinyal ESP32...";
+                        ts.style.color = "rgba(226,232,240,0.7)";
+                    }
+                }
+            }
+        }
+    });
+
+    // Start telemetry polling loop (sebagai cadangan saat running di localhost)
     setInterval(updateTelemetryUI, 1000);
 });
