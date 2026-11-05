@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="id" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FalakHub — Islamic Astronomical Observatory · ALICIA 2026</title>
-    <meta name="description" content="FalakHub: Real-time 3D Islamic Astronomy Dashboard. Ephemeris, MABIMS Hilal Visibility, and Celestial Mechanics powered by NASA JPL DE421.">
+    <title>HILTRON — Islamic Astronomical Observatory · OASE III 2026</title>
+    <meta name="description"
+        content="HILTRON: Real-time 3D Islamic Astronomy Dashboard. Ephemeris, MABIMS Hilal Visibility, and Celestial Mechanics powered by NASA JPL DE421.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
 
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -33,6 +37,7 @@
         }
     </script>
 </head>
+
 <body>
 
     <!-- Loading Screen -->
@@ -40,9 +45,10 @@
         <div class="loader-ring"></div>
         <div style="text-align:center">
             <div style="font-size:22px;font-weight:700;letter-spacing:0.05em;color:#E2E8F0;margin-bottom:4px;">
-                <span style="color:#10B981;">☽</span> FalakHub
+                <span style="color:#10B981;">☽</span> HILTRON
             </div>
-            <div style="font-size:12px;color:rgba(226,232,240,0.5);letter-spacing:0.1em;">MEMUAT EPHEMERIS NASA JPL…</div>
+            <div style="font-size:12px;color:rgba(226,232,240,0.5);letter-spacing:0.1em;">MEMUAT EPHEMERIS NASA JPL…
+            </div>
         </div>
     </div>
 
@@ -65,33 +71,41 @@
             <!-- Logo -->
             <div class="flex items-center gap-3">
                 <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;">
-                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px;filter:drop-shadow(0 0 8px rgba(16,185,129,0.6))">
-                        <path d="M28 16.95A12 12 0 1 1 15.05 4 9.33 9.33 0 0 0 28 16.95z" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="22" cy="8" r="2" fill="#F59E0B" opacity="0.8"/>
-                        <circle cx="26" cy="14" r="1.2" fill="#F59E0B" opacity="0.5"/>
+                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"
+                        style="width:28px;height:28px;filter:drop-shadow(0 0 8px rgba(16,185,129,0.6))">
+                        <path d="M28 16.95A12 12 0 1 1 15.05 4 9.33 9.33 0 0 0 28 16.95z" stroke="#10B981"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <circle cx="22" cy="8" r="2" fill="#F59E0B" opacity="0.8" />
+                        <circle cx="26" cy="14" r="1.2" fill="#F59E0B" opacity="0.5" />
                     </svg>
                 </div>
                 <div>
-                    <div style="font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#E2E8F0;">FalakHub</div>
-                    <div style="font-size:10px;letter-spacing:0.12em;color:rgba(226,232,240,0.4);font-weight:500;text-transform:uppercase;">Islamic Observatory · ALICIA 2026</div>
+                    <div style="font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#E2E8F0;">HILTRON</div>
+                    <div
+                        style="font-size:10px;letter-spacing:0.12em;color:rgba(226,232,240,0.4);font-weight:500;text-transform:uppercase;">
+                        Islamic Observatory · OASE III 2026</div>
                 </div>
             </div>
 
             <!-- Center: Active Date -->
             <div class="hidden md:flex flex-col items-center gap-0.5">
-                <div id="ui-active-date" style="font-size:13px;font-weight:600;color:#E2E8F0;letter-spacing:0.01em;">Memuat tanggal…</div>
-                <div style="font-size:10px;color:rgba(226,232,240,0.4);letter-spacing:0.06em;">KALENDER HIJRIAH · MASEHI</div>
+                <div id="ui-active-date" style="font-size:13px;font-weight:600;color:#E2E8F0;letter-spacing:0.01em;">
+                    Memuat tanggal…</div>
+                <div style="font-size:10px;color:rgba(226,232,240,0.4);letter-spacing:0.06em;">KALENDER HIJRIAH · MASEHI
+                </div>
             </div>
 
             <!-- Right: Live Coordinates + API Status -->
             <div class="flex items-center gap-4">
                 <div class="hidden lg:flex flex-col items-end gap-0.5">
-                    <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:rgba(226,232,240,0.7);" id="header-coords">—</div>
+                    <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:rgba(226,232,240,0.7);"
+                        id="header-coords">—</div>
                     <div style="font-size:10px;color:rgba(226,232,240,0.4);letter-spacing:0.06em;">OBSERVASI AKTIF</div>
                 </div>
                 <div class="api-pill" id="api-pill">
                     <div class="dot" id="api-status-indicator"></div>
-                    <span style="font-size:11px;font-weight:600;color:#10B981;letter-spacing:0.06em;" id="api-status-text">Menghubungkan…</span>
+                    <span style="font-size:11px;font-weight:600;color:#10B981;letter-spacing:0.06em;"
+                        id="api-status-text">Menghubungkan…</span>
                 </div>
             </div>
         </header>
@@ -106,21 +120,31 @@
                 <!-- Search Form & GPS -->
                 <div style="display:flex;gap:8px;margin-bottom:10px;">
                     <form id="search-form" style="position:relative;flex:1;">
-                        <i class="fas fa-search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:rgba(226,232,240,0.35);font-size:12px;"></i>
-                        <input type="text" id="city-search-input" class="search-input" placeholder="Cari kota di seluruh dunia…" autocomplete="off" style="width:100%;">
+                        <i class="fas fa-search"
+                            style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:rgba(226,232,240,0.35);font-size:12px;"></i>
+                        <input type="text" id="city-search-input" class="search-input"
+                            placeholder="Cari kota di seluruh dunia…" autocomplete="off" style="width:100%;">
                     </form>
-                    <button id="btn-gps" style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:#10B981;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" title="Gunakan GPS Lokasi Saat Ini">
+                    <button id="btn-gps"
+                        style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:#10B981;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.05)'" title="Gunakan GPS Lokasi Saat Ini">
                         <i class="fas fa-crosshairs"></i>
                     </button>
                 </div>
 
                 <!-- Active City Button -->
-                <button id="city-dropdown-btn" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.05);border:1px solid var(--c-border);border-radius:8px;padding:9px 12px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.09)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                <button id="city-dropdown-btn"
+                    style="width:100%;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.05);border:1px solid var(--c-border);border-radius:8px;padding:9px 12px;cursor:pointer;transition:background 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.09)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.05)'">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-map-marker-alt" style="color:#10B981;font-size:12px;"></i>
-                        <span id="active-city-label" style="font-size:13px;font-weight:600;color:#E2E8F0;">Memuat…</span>
+                        <span id="active-city-label"
+                            style="font-size:13px;font-weight:600;color:#E2E8F0;">Memuat…</span>
                     </div>
-                    <i class="fas fa-chevron-down" id="dropdown-chevron" style="color:rgba(226,232,240,0.4);font-size:11px;transition:transform 0.25s;"></i>
+                    <i class="fas fa-chevron-down" id="dropdown-chevron"
+                        style="color:rgba(226,232,240,0.4);font-size:11px;transition:transform 0.25s;"></i>
                 </button>
 
                 <!-- Dropdown List -->
@@ -135,9 +159,12 @@
                     <div class="flex items-center justify-between mb-2">
                         <div class="section-label">Horizon Optis 3D</div>
                         <div class="flex gap-1.5">
-                            <button id="btn-skydome-reset" class="btn-icon" title="Reset Kamera"><i class="fas fa-crosshairs"></i></button>
-                            <button id="btn-skydome-fs" class="btn-icon" title="Fullscreen"><i class="fas fa-expand"></i></button>
-                            <span style="font-size:10px;background:rgba(59,130,246,0.2);color:#3B82F6;border:1px solid rgba(59,130,246,0.3);padding:2px 8px;border-radius:4px;font-weight:600;">BARAT</span>
+                            <button id="btn-skydome-reset" class="btn-icon" title="Reset Kamera"><i
+                                    class="fas fa-crosshairs"></i></button>
+                            <button id="btn-skydome-fs" class="btn-icon" title="Fullscreen"><i
+                                    class="fas fa-expand"></i></button>
+                            <span
+                                style="font-size:10px;background:rgba(59,130,246,0.2);color:#3B82F6;border:1px solid rgba(59,130,246,0.3);padding:2px 8px;border-radius:4px;font-weight:600;">BARAT</span>
                         </div>
                     </div>
 
@@ -147,69 +174,156 @@
                     </div>
 
                     <!-- Time Slider -->
-                    <div style="margin-top:10px;background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:8px;padding:10px 12px;">
+                    <div
+                        style="margin-top:10px;background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:8px;padding:10px 12px;">
                         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                            <span style="font-size:10px;color:var(--c-muted);font-family:'JetBrains Mono',monospace;">−12j</span>
+                            <span
+                                style="font-size:10px;color:var(--c-muted);font-family:'JetBrains Mono',monospace;">−12j</span>
                             <div style="text-align:center;">
-                                <div style="font-size:10px;color:#F59E0B;font-weight:700;letter-spacing:0.06em;">OFFSET WAKTU</div>
-                                <div id="slider-time-display" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#E2E8F0;">±0 menit</div>
+                                <div style="font-size:10px;color:#F59E0B;font-weight:700;letter-spacing:0.06em;">OFFSET
+                                    WAKTU</div>
+                                <div id="slider-time-display"
+                                    style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#E2E8F0;">±0
+                                    menit</div>
                             </div>
-                            <span style="font-size:10px;color:var(--c-muted);font-family:'JetBrains Mono',monospace;">+12j</span>
+                            <span
+                                style="font-size:10px;color:var(--c-muted);font-family:'JetBrains Mono',monospace;">+12j</span>
                         </div>
                         <input type="range" id="time-slider" min="-720" max="720" value="0" step="5">
+
+                        <!-- Live Simulation Toolbar -->
+                        <div
+                            style="display:flex;flex-direction:column;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
+                            <!-- Action buttons row: Live / Jeda & Reset Sekarang -->
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                                <button id="btn-time-play" class="time-ctrl-btn" title="Jeda / Putar Waktu Simulasi"
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:#E2E8F0;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                                    <i class="fas fa-pause" id="icon-time-play"
+                                        style="font-size:10px;color:#10B981;"></i>
+                                    <span id="text-time-play" style="font-size:11px;font-weight:600;">Live
+                                        Ticking</span>
+                                </button>
+                                <button id="btn-time-reset" class="time-ctrl-btn"
+                                    title="Kembali ke Waktu Sekarang (Offset 0)"
+                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:#E2E8F0;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                                    <i class="fas fa-undo-alt" style="font-size:10px;color:#F59E0B;"></i>
+                                    <span style="font-size:11px;font-weight:500;">Sekarang</span>
+                                </button>
+                            </div>
+
+                            <!-- Speed selector row -->
+                            <div
+                                style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.25);padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);">
+                                <span style="font-size:10px;color:var(--c-muted);letter-spacing:0.04em;">Laju:</span>
+                                <div style="display:flex;align-items:center;gap:4px;">
+                                    <button id="btn-speed-1x" class="speed-btn active" data-speed="1"
+                                        style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4);color:#10B981;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">1x
+                                        (Nyata)</button>
+                                    <button id="btn-speed-10x" class="speed-btn" data-speed="10"
+                                        style="background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:var(--c-muted);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:600;cursor:pointer;">10x</button>
+                                    <button id="btn-speed-60x" class="speed-btn" data-speed="60"
+                                        style="background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:var(--c-muted);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:600;cursor:pointer;">60x</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="divider" style="margin:0;"></div>
 
                 <!-- Sun Data Accordion -->
-                <div style="background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:10px;overflow:hidden;">
-                    <button class="accordion-btn" data-target="acc-sun" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div
+                    style="background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:10px;overflow:hidden;">
+                    <button class="accordion-btn" data-target="acc-sun"
+                        style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:transparent;border:none;cursor:pointer;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+                        onmouseout="this.style.background='transparent'">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-sun" style="color:#F59E0B;font-size:12px;"></i>
                             <span style="font-size:13px;font-weight:600;color:#E2E8F0;">Data Matahari</span>
                         </div>
-                        <i class="fas fa-chevron-down accordion-icon open" id="icon-acc-sun" style="color:rgba(226,232,240,0.4);font-size:11px;"></i>
+                        <i class="fas fa-chevron-down accordion-icon open" id="icon-acc-sun"
+                            style="color:rgba(226,232,240,0.4);font-size:11px;"></i>
                     </button>
-                    <div id="acc-sun" class="accordion-content" style="border-top:1px solid var(--c-border);padding:12px 14px;">
-                        <div class="data-row"><span class="label">Waktu Simulasi</span><span class="hud-value neon" id="val-time">--:--:--</span></div>
-                        <div class="data-row"><span class="label">Terbenam (Sunset)</span><span class="hud-value" id="val-sunset">-- UTC</span></div>
-                        <div class="data-row"><span class="label">Azimuth Matahari</span><span class="hud-value gold" id="val-azisun">0.00°</span></div>
-                        <div class="data-row"><span class="label">Altitude Matahari</span><span class="hud-value gold" id="val-altisun">0.00°</span></div>
+                    <div id="acc-sun" class="accordion-content"
+                        style="border-top:1px solid var(--c-border);padding:12px 14px;">
+                        <div class="data-row">
+                            <span class="label"><span
+                                    class="inline-block w-2 h-2 rounded-full bg-emerald-400 live-dot-pulse"
+                                    style="margin-right:6px;"></span>Waktu Simulasi</span>
+                            <span class="hud-value neon" id="val-time">--:--:--</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="label">Standar UTC</span>
+                            <span class="hud-value" id="val-time-utc" style="color:rgba(226,232,240,0.65);">--:--:--
+                                UTC</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="label">Terbenam (Sunset)</span>
+                            <span class="hud-value" id="val-sunset">--:--</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="label">Azimuth Matahari</span>
+                            <span class="hud-value gold" id="val-azisun">0.00°</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="label">Altitude Matahari</span>
+                            <span class="hud-value gold" id="val-altisun">0.00°</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Moon Data Accordion -->
-                <div style="background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:10px;overflow:hidden;">
-                    <button class="accordion-btn" data-target="acc-moon" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div
+                    style="background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:10px;overflow:hidden;">
+                    <button class="accordion-btn" data-target="acc-moon"
+                        style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:transparent;border:none;cursor:pointer;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+                        onmouseout="this.style.background='transparent'">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-moon" style="color:#CBD5E1;font-size:12px;"></i>
                             <span style="font-size:13px;font-weight:600;color:#E2E8F0;">Data Bulan (Hilal)</span>
                         </div>
-                        <i class="fas fa-chevron-down accordion-icon open" id="icon-acc-moon" style="color:rgba(226,232,240,0.4);font-size:11px;"></i>
+                        <i class="fas fa-chevron-down accordion-icon open" id="icon-acc-moon"
+                            style="color:rgba(226,232,240,0.4);font-size:11px;"></i>
                     </button>
-                    <div id="acc-moon" class="accordion-content" style="border-top:1px solid var(--c-border);padding:12px 14px;">
-                        <div class="data-row"><span class="label">Tinggi Hilal (ARCV)</span><span class="hud-value blue" id="ui-tinggi">0.00°</span></div>
-                        <div class="data-row"><span class="label">Elongasi (ARCL)</span><span class="hud-value" id="ui-elongasi">0.00°</span></div>
-                        <div class="data-row"><span class="label">Azimuth Bulan</span><span class="hud-value" id="val-azisab">0.00°</span></div>
-                        <div class="data-row"><span class="label">Altitude Bulan</span><span class="hud-value" id="val-altimoon">0.00°</span></div>
-                        <div class="data-row"><span class="label">Fraksi Iluminasi</span><span class="hud-value gold" id="val-fraksi">0.00%</span></div>
+                    <div id="acc-moon" class="accordion-content"
+                        style="border-top:1px solid var(--c-border);padding:12px 14px;">
+                        <div class="data-row"><span class="label">Tinggi Hilal (ARCV)</span><span class="hud-value blue"
+                                id="ui-tinggi">0.00°</span></div>
+                        <div class="data-row"><span class="label">Elongasi (ARCL)</span><span class="hud-value"
+                                id="ui-elongasi">0.00°</span></div>
+                        <div class="data-row"><span class="label">Azimuth Bulan</span><span class="hud-value"
+                                id="val-azisab">0.00°</span></div>
+                        <div class="data-row"><span class="label">Altitude Bulan</span><span class="hud-value"
+                                id="val-altimoon">0.00°</span></div>
+                        <div class="data-row"><span class="label">Fraksi Iluminasi</span><span class="hud-value gold"
+                                id="val-fraksi">0.00%</span></div>
                     </div>
                 </div>
 
                 <!-- GMST Accordion -->
-                <div style="background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:10px;overflow:hidden;">
-                    <button class="accordion-btn" data-target="acc-gmst" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+                <div
+                    style="background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:10px;overflow:hidden;">
+                    <button class="accordion-btn" data-target="acc-gmst"
+                        style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:transparent;border:none;cursor:pointer;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+                        onmouseout="this.style.background='transparent'">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-globe" style="color:#A78BFA;font-size:12px;"></i>
                             <span style="font-size:13px;font-weight:600;color:#E2E8F0;">Data Astronomi</span>
                         </div>
-                        <i class="fas fa-chevron-down accordion-icon" id="icon-acc-gmst" style="color:rgba(226,232,240,0.4);font-size:11px;"></i>
+                        <i class="fas fa-chevron-down accordion-icon" id="icon-acc-gmst"
+                            style="color:rgba(226,232,240,0.4);font-size:11px;"></i>
                     </button>
-                    <div id="acc-gmst" class="accordion-content collapsed" style="border-top:1px solid var(--c-border);padding:12px 14px;">
-                        <div class="data-row"><span class="label">GMST (jam)</span><span class="hud-value" style="color:#A78BFA;" id="val-gmst">0.000 j</span></div>
-                        <div class="data-row"><span class="label">Lintang</span><span class="hud-value" id="val-lat">0.0000°</span></div>
-                        <div class="data-row"><span class="label">Bujur</span><span class="hud-value" id="val-lon">0.0000°</span></div>
+                    <div id="acc-gmst" class="accordion-content collapsed"
+                        style="border-top:1px solid var(--c-border);padding:12px 14px;">
+                        <div class="data-row"><span class="label">GMST (jam)</span><span class="hud-value"
+                                style="color:#A78BFA;" id="val-gmst">0.000 j</span></div>
+                        <div class="data-row"><span class="label">Lintang</span><span class="hud-value"
+                                id="val-lat">0.0000°</span></div>
+                        <div class="data-row"><span class="label">Bujur</span><span class="hud-value"
+                                id="val-lon">0.0000°</span></div>
                     </div>
                 </div>
 
@@ -218,7 +332,7 @@
 
         <!-- ═══════════════════════════════════════ CENTER (globe HUD) ═ -->
         <div id="center-hud">
-            
+
             <!-- Mobile Backdrop -->
             <div id="mobile-backdrop"></div>
 
@@ -227,9 +341,11 @@
             <button id="btn-toggle-right" class="fab-btn fab-right"><i class="fas fa-moon"></i></button>
 
             <!-- Bottom of center: subtle label -->
-            <div class="glass-panel-sm pe-auto" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); padding:8px 20px;display:inline-flex;align-items:center;gap:10px;">
+            <div class="glass-panel-sm pe-auto"
+                style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); padding:8px 20px;display:inline-flex;align-items:center;gap:10px;">
                 <i class="fas fa-circle" style="font-size:7px;color:#10B981;animation:pulse-dot 2s infinite;"></i>
-                <span style="font-size:11px;color:rgba(226,232,240,0.6);letter-spacing:0.08em;white-space:nowrap;">KLIK BUMI UNTUK PILIH LOKASI • SCROLL UNTUK ZOOM</span>
+                <span style="font-size:11px;color:rgba(226,232,240,0.6);letter-spacing:0.08em;white-space:nowrap;">KLIK
+                    BUMI UNTUK PILIH LOKASI • SCROLL UNTUK ZOOM</span>
             </div>
         </div>
 
@@ -238,7 +354,15 @@
 
             <!-- Date Picker -->
             <div class="glass-panel" style="padding:16px;border-radius:16px;">
-                <div class="section-label mb-2">Tanggal Observasi</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <div class="section-label">Tanggal Observasi</div>
+                    <button id="btn-date-today"
+                        style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#10B981;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.2s;"
+                        onmouseover="this.style.background='rgba(16,185,129,0.25)'"
+                        onmouseout="this.style.background='rgba(16,185,129,0.15)'">
+                        <i class="fas fa-calendar-day"></i> Hari Ini
+                    </button>
+                </div>
                 <input type="date" id="date-picker">
             </div>
 
@@ -269,30 +393,94 @@
             <!-- Telescope Control -->
             <div class="glass-panel" style="padding:16px;border-radius:16px;">
                 <div class="section-label mb-3">Kontrol Hardware (ESP32)</div>
-                <button id="btn-point" style="width:100%;padding:12px;background:#10B981;color:white;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;transition:background 0.3s;border:none;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
+                <button id="btn-point"
+                    style="width:100%;padding:12px;background:#10B981;color:white;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;transition:background 0.3s;border:none;"
+                    onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
                     <i class="fas fa-satellite-dish" style="margin-right:6px;"></i> Arahkan Teleskop
                 </button>
-                <div id="tracker-status" style="margin-top:12px;font-size:11px;color:rgba(226,232,240,0.7);text-align:center;">
+                <button id="btn-set-home"
+                    style="width:100%;margin-top:8px;padding:9px;background:rgba(255,255,255,0.05);color:#CBD5E1;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;transition:all 0.3s;border:1px solid var(--c-border);"
+                    onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                    <i class="fas fa-crosshairs" style="margin-right:6px;"></i> Kalibrasi Titik Nol (0° Ufuk & Hadap
+                    Utara)
+                </button>
+                <div id="tracker-status"
+                    style="margin-top:12px;font-size:11px;color:rgba(226,232,240,0.7);text-align:center;">
                     Status: Menunggu instruksi...
                 </div>
             </div>
 
-            <!-- Telemetry BNO055 -->
+            <!-- GPS Hardware / Device Panel -->
             <div class="glass-panel" style="padding:16px;border-radius:16px;">
-                <div class="section-label mb-3">Sensor Orientasi BNO055</div>
-                
+                <div style="display:flex;justify-content:space-between;align-items:center;" class="mb-3">
+                    <div class="section-label" style="margin-bottom:0;"><i class="fas fa-location-dot"
+                            style="color:#10B981;margin-right:6px;"></i>GPS Lokasi Observasi</div>
+                    <span id="gps-lock-badge"
+                        style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(59,130,246,0.2);color:#3B82F6;border:1px solid rgba(59,130,246,0.3);">
+                        GPS PERANGKAT
+                    </span>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px;">
+                    <span style="color:var(--c-muted);">Latitude (Lintang)</span>
+                    <span id="gps-lat"
+                        style="font-family:'JetBrains Mono',monospace;color:#E2E8F0;font-weight:600;">--</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px;">
+                    <span style="color:var(--c-muted);">Longitude (Bujur)</span>
+                    <span id="gps-lon"
+                        style="font-family:'JetBrains Mono',monospace;color:#E2E8F0;font-weight:600;">--</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:11px;">
+                    <span style="color:var(--c-muted);" id="gps-source-label">Sumber Lokasi</span>
+                    <span id="gps-sats"
+                        style="font-family:'JetBrains Mono',monospace;color:#38BDF8;font-weight:600;">Browser /
+                        HP</span>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button id="btn-detect-device-gps"
+                        style="width:100%;padding:10px;background:#10B981;color:#FFFFFF;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;border:none;transition:background 0.3s;"
+                        onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
+                        <i class="fas fa-crosshairs" style="margin-right:6px;"></i> Ambil Lokasi GPS HP / Laptop
+                    </button>
+                    <button id="btn-apply-gps" disabled
+                        style="display:none;width:100%;padding:9px;background:rgba(16,185,129,0.2);color:rgba(255,255,255,0.4);border-radius:8px;font-weight:600;font-size:11px;cursor:not-allowed;border:1px solid rgba(16,185,129,0.2);transition:all 0.3s;">
+                        <i class="fas fa-microchip" style="margin-right:6px;"></i> Gunakan Modul GPS NEO-6M
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sensor Orientasi BNO055 -->
+            <div class="glass-panel" style="padding:16px;border-radius:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;" class="mb-3">
+                    <div class="section-label" style="margin-bottom:0;"><i class="fas fa-compass" style="color:#10B981;margin-right:6px;"></i>Sensor Orientasi BNO055</div>
+                    <span id="cal-locked-badge"
+                        style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(239,68,68,0.15);color:#EF4444;border:1px solid rgba(239,68,68,0.3);letter-spacing:0.04em;">
+                        <i class="fas fa-unlock"></i> BELUM TERSIMPAN
+                    </span>
+                </div>
+
                 <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
                     <span style="font-size:11px;color:var(--c-muted);">Azimuth Teleskop</span>
-                    <span id="tel-azimuth" style="font-size:12px;font-weight:600;color:#F59E0B;font-family:'JetBrains Mono',monospace;">0.00°</span>
+                    <span id="tel-azimuth"
+                        style="font-size:12px;font-weight:600;color:#F59E0B;font-family:'JetBrains Mono',monospace;">0.00°</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
                     <span style="font-size:11px;color:var(--c-muted);">Altitude Teleskop</span>
-                    <span id="tel-altitude" style="font-size:12px;font-weight:600;color:#F59E0B;font-family:'JetBrains Mono',monospace;">0.00°</span>
+                    <span id="tel-altitude"
+                        style="font-size:12px;font-weight:600;color:#F59E0B;font-family:'JetBrains Mono',monospace;">0.00°</span>
                 </div>
-                
+
                 <div class="divider" style="margin:8px 0;"></div>
-                <div style="font-size:10px;font-weight:600;color:var(--c-muted);margin-bottom:8px;text-transform:uppercase;">Status Kalibrasi (0=Buruk, 3=Sempurna)</div>
-                
+                <div id="cal-locked-notice" style="display:none;margin-bottom:10px;padding:8px 10px;border-radius:8px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);font-size:10px;color:#10B981;line-height:1.45;">
+                    <i class="fas fa-circle-check" style="margin-right:4px;"></i> <strong>PROFIL EEPROM AKTIF:</strong> Data kalibrasi tersimpan sudah dipakai chip. Angka 0/3 saat baru menyala adalah normal & alat 100% siap dipakai tanpa diputar-putar lagi!
+                </div>
+                <div
+                    style="font-size:10px;font-weight:600;color:var(--c-muted);margin-bottom:8px;text-transform:uppercase;">
+                    Status Kalibrasi (0=Buruk, 3=Sempurna)</div>
+
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;">
                     <span style="color:var(--c-muted);">System</span>
                     <span id="cal-sys" style="font-family:'JetBrains Mono',monospace;">0/3</span>
@@ -307,7 +495,27 @@
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:11px;">
                     <span style="color:var(--c-muted);">Magnetometer <i class="fas fa-compass"></i></span>
-                    <span id="cal-mag" style="font-weight:700;font-family:'JetBrains Mono',monospace;color:#EF4444;">0/3</span>
+                    <span id="cal-mag"
+                        style="font-weight:700;font-family:'JetBrains Mono',monospace;color:#EF4444;">0/3</span>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">
+                    <button id="btn-save-calib"
+                        style="width:100%;padding:9px;background:rgba(16,185,129,0.15);color:#10B981;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;border:1px solid rgba(16,185,129,0.3);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;"
+                        onmouseover="this.style.background='rgba(16,185,129,0.25)'"
+                        onmouseout="this.style.background='rgba(16,185,129,0.15)'"
+                        title="Simpan profil kalibrasi saat ini ke EEPROM Flash NVS ESP32 agar terkunci permanen">
+                        <i class="fas fa-shield-alt"></i> Kunci & Simpan Profil ke EEPROM
+                    </button>
+                    <button id="btn-clear-calib"
+                        style="width:100%;padding:6px;background:transparent;color:rgba(226,232,240,0.4);border-radius:6px;font-size:10px;cursor:pointer;border:none;transition:color 0.2s;display:flex;align-items:center;justify-content:center;gap:4px;"
+                        onmouseover="this.style.color='#EF4444'"
+                        onmouseout="this.style.color='rgba(226,232,240,0.4)'"
+                        title="Hapus profil kalibrasi di EEPROM jika ingin kalibrasi ulang dari nol">
+                        <i class="fas fa-rotate-left"></i> Reset Profil Tersimpan
+                    </button>
+                    <!-- Notifikasi status perekaman kalibrasi langsung di kartu BNO055 -->
+                    <div id="cal-status-msg" style="display:none;margin-top:6px;padding:8px 10px;border-radius:8px;font-size:11px;line-height:1.4;text-align:center;transition:all 0.3s;"></div>
                 </div>
             </div>
 
@@ -340,7 +548,8 @@
             </div>
 
             <!-- Credits -->
-            <div style="padding:12px 16px;background:rgba(255,255,255,0.02);border:1px solid var(--c-border);border-radius:12px;">
+            <div
+                style="padding:12px 16px;background:rgba(255,255,255,0.02);border:1px solid var(--c-border);border-radius:12px;">
                 <div style="font-size:10px;color:var(--c-muted);line-height:1.7;letter-spacing:0.03em;">
                     Ephemeris: <span style="color:rgba(226,232,240,0.7);">NASA JPL DE421</span><br>
                     Engine: <span style="color:rgba(226,232,240,0.7);">Skyfield 1.x</span><br>
@@ -353,7 +562,8 @@
 
     </div><!-- end ui-layer -->
 
-    <!-- Main App Script -->
-    <script type="module" src="js/main.js"></script>
+    <!-- Main App Script (Cache buster v6) -->
+    <script type="module" src="js/main.js?v=6"></script>
 </body>
+
 </html>

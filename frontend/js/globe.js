@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 
 /* ═══════════════════════════════════════════════════════════════
-   FalakHub · Globe.js
+   HILTRON · Globe.js
    Photorealistic Earth with Lensflare Sun, textured Moon,
    on-demand rendering, and absolute ephemeris positioning.
 ═══════════════════════════════════════════════════════════════ */
@@ -281,43 +281,6 @@ export function initGlobe(container, cities, onCitySelect) {
     moonMesh.name  = 'Moon';
     scene.add(moonMesh); // Scene-level: positioned in world space via ephemeris
 
-    // ── Orbit Trace Lines ─────────────────────────────────────────
-    function buildOrbitCircle(radius, segments = 128) {
-        const pts = [];
-        for (let i = 0; i <= segments; i++) {
-            const a = (i / segments) * Math.PI * 2;
-            pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
-        }
-        const geom = new THREE.BufferGeometry().setFromPoints(pts);
-        return geom;
-    }
-
-    const sunOrbitGeom = buildOrbitCircle(120);
-    const sunOrbitLine = new THREE.LineLoop(
-        sunOrbitGeom,
-        new THREE.LineBasicMaterial({ color: 0x443322, transparent: true, opacity: 0.25, depthWrite: false })
-    );
-    scene.add(sunOrbitLine);
-
-    const moonOrbitGeom = buildOrbitCircle(18);
-    const moonOrbitLine = new THREE.LineLoop(
-        moonOrbitGeom,
-        new THREE.LineBasicMaterial({ color: 0x334455, transparent: true, opacity: 0.35, depthWrite: false })
-    );
-    scene.add(moonOrbitLine);
-
-    // Reorient orbit ring so it passes through a given world position
-    function tiltOrbitToPoint(orbitLine, targetPos) {
-        const flat = new THREE.Vector3(0, 1, 0); // original orbit normal is Y
-        const dir  = targetPos.clone().normalize();
-        if (dir.lengthSq() < 0.0001) return;
-        // Find the rotation axis (cross of Y and dir)
-        const axis = flat.clone().cross(dir);
-        if (axis.lengthSq() < 0.0001) return;
-        const angle = Math.acos(THREE.MathUtils.clamp(flat.dot(dir), -1, 1));
-        orbitLine.setRotationFromAxisAngle(axis.normalize(), angle);
-    }
-
     // ── MABIMS Map: InstancedMesh ─────────────────────────────────
     let mabimsInstance = null;
     const dotGeom = new THREE.SphereGeometry(0.06, 4, 4);
@@ -380,11 +343,9 @@ export function initGlobe(container, cities, onCitySelect) {
             const hits = raycaster.intersectObject(earthMesh);
             if (hits.length > 0) {
                 const local = earthMesh.worldToLocal(hits[0].point.clone());
-                const sph   = new THREE.Spherical().setFromVector3(local);
-                const lat   = 90 - THREE.MathUtils.radToDeg(sph.phi);
-                let   lon   = THREE.MathUtils.radToDeg(sph.theta) - 180;
-                if (lon < -180) lon += 360;
-                if (lon >  180) lon -= 360;
+                const r = local.length();
+                const lat = Math.asin(THREE.MathUtils.clamp(local.y / r, -1, 1)) * (180 / Math.PI);
+                const lon = Math.atan2(-local.z, local.x) * (180 / Math.PI);
                 const latStr = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}`;
                 const lonStr = `${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`;
                 if (tooltip) {
@@ -432,11 +393,9 @@ export function initGlobe(container, cities, onCitySelect) {
         const earthHits = raycaster.intersectObject(earthMesh);
         if (earthHits.length > 0) {
             const local = earthMesh.worldToLocal(earthHits[0].point.clone());
-            const sph   = new THREE.Spherical().setFromVector3(local);
-            const lat   = 90 - THREE.MathUtils.radToDeg(sph.phi);
-            let   lon   = THREE.MathUtils.radToDeg(sph.theta) - 180;
-            if (lon < -180) lon += 360;
-            if (lon >  180) lon -= 360;
+            const r = local.length();
+            const lat = Math.asin(THREE.MathUtils.clamp(local.y / r, -1, 1)) * (180 / Math.PI);
+            const lon = Math.atan2(-local.z, local.x) * (180 / Math.PI);
             if (window.onMapClick) window.onMapClick(lat, lon);
         }
     });
@@ -447,6 +406,7 @@ export function initGlobe(container, cities, onCitySelect) {
 
     // ── State ─────────────────────────────────────────────────────
     let targetEarthAngle = 0;
+    let isEphemerisInitialized = false;
     let isCameraFollowing = false;
     let targetCameraPos   = new THREE.Vector3();
     let camPanTarget      = null; // for smooth pan
@@ -456,15 +416,15 @@ export function initGlobe(container, cities, onCitySelect) {
 
     // Celestial Coordinates (RA/Dec) to World Space
     // RA is in hours (0-24), Dec is in degrees.
-    // Earth rotates by GMST around Y axis.
-    // RA=0 matches -X in world space when GMST=0.
+    // Earth rotates by GMST around Y axis: theta = (GMST/24) * 2π.
+    // On Greenwich meridian (lon=0), when GMST = RA, the object is directly on the meridian.
     function raDecToVec3(raHours, decDeg, radius) {
         const ra  = THREE.MathUtils.degToRad(raHours * 15);
         const dec = THREE.MathUtils.degToRad(decDeg);
-        const y = radius * Math.sin(dec);
+        const y   = radius * Math.sin(dec);
         const rXZ = radius * Math.cos(dec);
-        const x = -rXZ * Math.cos(ra);
-        const z = -rXZ * Math.sin(ra);
+        const x   = rXZ * Math.cos(ra);
+        const z   = -rXZ * Math.sin(ra);
         return new THREE.Vector3(x, y, z);
     }
 
@@ -475,10 +435,12 @@ export function initGlobe(container, cities, onCitySelect) {
         requestAnimationFrame(animate);
         const dt = clock.getDelta();
 
-        // Smooth Earth rotation toward GMST target
-        const angleDiff = targetEarthAngle - earthMesh.rotation.y;
-        if (Math.abs(angleDiff) > 0.0005) {
-            earthMesh.rotation.y += angleDiff * Math.min(dt * 3, 0.08);
+        // Smooth Earth rotation toward GMST target (with shortest-path angle wrapping)
+        let angleDiff = (targetEarthAngle - earthMesh.rotation.y) % (Math.PI * 2);
+        if (angleDiff > Math.PI)  angleDiff -= Math.PI * 2;
+        if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        if (Math.abs(angleDiff) > 0.000005) {
+            earthMesh.rotation.y += angleDiff * Math.min(dt * 5, 0.1);
             needsRender = true;
         }
 
@@ -552,17 +514,17 @@ export function initGlobe(container, cities, onCitySelect) {
         },
 
         panToLatLon(lat, lon) {
-            const worldPos = latLonToVec3(lat, lon, EARTH_RADIUS);
-            // Compute camera offset: position above the point
-            const dir = worldPos.clone().normalize();
+            const localPos = latLonToVec3(lat, lon, EARTH_RADIUS);
+            const worldPos = localPos.clone().applyEuler(earthMesh.rotation);
+            const dir = worldPos.normalize();
             camPanTarget = dir.multiplyScalar(22);
             isCameraFollowing = false;
             requestRender();
         },
 
         setEphemeris(gmst_hours, sun_ra, sun_dec, moon_ra, moon_dec) {
-            // Absolute Earth rotation from GMST
-            targetEarthAngle = (gmst_hours / 24) * Math.PI * 2 + Math.PI;
+            // Absolute Earth rotation from GMST (matches Greenwich meridian to celestial RA)
+            targetEarthAngle = (gmst_hours / 24) * Math.PI * 2;
 
             // Absolute Sun position from RA/Dec
             targetSunPos.copy(raDecToVec3(sun_ra, sun_dec, 120));
@@ -570,9 +532,14 @@ export function initGlobe(container, cities, onCitySelect) {
             // Absolute Moon position from RA/Dec
             targetMoonPos.copy(raDecToVec3(moon_ra, moon_dec, 18));
 
-            // Reorient orbit guide rings
-            tiltOrbitToPoint(sunOrbitLine,  targetSunPos);
-            tiltOrbitToPoint(moonOrbitLine, targetMoonPos);
+            // Snap immediately on first ephemeris update to avoid lerp delay from dummy (120, 0, 0)
+            if (!isEphemerisInitialized) {
+                earthMesh.rotation.y = targetEarthAngle;
+                sunMesh.position.copy(targetSunPos);
+                sunLight.position.copy(targetSunPos);
+                moonMesh.position.copy(targetMoonPos);
+                isEphemerisInitialized = true;
+            }
 
             requestRender();
         },

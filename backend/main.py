@@ -15,7 +15,7 @@ from geopy.geocoders import Nominatim
 from astronomy.engine import FalakCalculator
 from ai.predictive_cache import PredictiveCache
 
-app = FastAPI(title="FalakHub API", version="1.1.0")
+app = FastAPI(title="HILTRON API", version="1.1.0")
 
 # CORS untuk mengizinkan akses dari Vercel/Frontend
 app.add_middleware(
@@ -109,7 +109,7 @@ def search_location(q: str):
     """
     try:
         from geopy.geocoders import Nominatim
-        geolocator = Nominatim(user_agent="FalakHub_App")
+        geolocator = Nominatim(user_agent="HILTRON_App")
         location = geolocator.geocode(q)
         if location:
             return {
@@ -149,6 +149,11 @@ esp32_telemetry = {
     "cal_gyro": 0,
     "cal_accel": 0,
     "cal_mag": 0,
+    "cal_locked": False,
+    "gps_valid": False,
+    "gps_lat": 0.0,
+    "gps_lon": 0.0,
+    "gps_sats": 0,
     "last_update": None
 }
 
@@ -180,8 +185,19 @@ async def websocket_esp32(websocket: WebSocket):
                         "cal_gyro": parsed.get("cal_gyro", 0),
                         "cal_accel": parsed.get("cal_accel", 0),
                         "cal_mag": parsed.get("cal_mag", 0),
+                        "cal_locked": (str(parsed.get("cal_locked", False)).lower() == "true") if isinstance(parsed.get("cal_locked", False), str) else bool(parsed.get("cal_locked", False)),
+                        "gps_valid": parsed.get("gps_valid", False),
+                        "gps_lat": parsed.get("gps_lat", 0.0),
+                        "gps_lon": parsed.get("gps_lon", 0.0),
+                        "gps_sats": parsed.get("gps_sats", 0),
                         "last_update": datetime.now().isoformat()
                     })
+                elif parsed.get("type") == "event":
+                    event_status = parsed.get("status")
+                    if event_status == "CALIBRATION_SAVED":
+                        esp32_telemetry["cal_locked"] = True
+                    elif event_status == "CALIBRATION_CLEARED":
+                        esp32_telemetry["cal_locked"] = False
                 elif parsed.get("status") == "ESP32_READY":
                     esp32_telemetry["status"] = "connected"
             except:
@@ -198,16 +214,72 @@ async def point_hilal(target: TargetCoordinates):
         "target_altitude": target.target_altitude
     }
     # Ubah dictionary python menjadi JSON string dan kirim ke ESP32
+    if len(manager.active_connections) == 0:
+        return {
+            "status": "warning",
+            "message": "ESP32 belum terhubung ke Server! Periksa apakah ESP32 sudah menyala dan terhubung ke Wi-Fi.",
+            "payload": payload
+        }
     await manager.broadcast(json.dumps(payload))
     return {"status": "success", "message": "Command POINT_HILAL berhasil dikirim ke ESP32", "payload": payload}
 
+@app.api_route("/api/set-home", methods=["GET", "POST"])
+async def set_home():
+    payload = {"command": "SET_HOME"}
+    if len(manager.active_connections) == 0:
+        return {
+            "status": "warning",
+            "message": "ESP32 belum terhubung ke Server! Pastikan ESP32 sudah online.",
+            "payload": payload
+        }
+    await manager.broadcast(json.dumps(payload))
+    return {"status": "success", "message": "Perintah SET_HOME (0° Ufuk & Utara) berhasil dikirim ke ESP32", "payload": payload}
+
+@app.api_route("/api/save-calibration", methods=["GET", "POST"])
+async def save_calibration():
+    payload = {"command": "SAVE_CALIBRATION"}
+    if len(manager.active_connections) == 0:
+        return {
+            "status": "warning",
+            "message": "ESP32 belum terhubung ke Server! Pastikan ESP32 sudah online.",
+            "payload": payload
+        }
+    await manager.broadcast(json.dumps(payload))
+    esp32_telemetry["cal_locked"] = True
+    return {"status": "success", "message": "Perintah SAVE_CALIBRATION berhasil dikirim ke ESP32", "payload": payload}
+
+@app.api_route("/api/clear-calibration", methods=["GET", "POST"])
+async def clear_calibration():
+    payload = {"command": "CLEAR_CALIBRATION"}
+    if len(manager.active_connections) == 0:
+        return {
+            "status": "warning",
+            "message": "ESP32 belum terhubung ke Server! Pastikan ESP32 sudah online.",
+            "payload": payload
+        }
+    await manager.broadcast(json.dumps(payload))
+    esp32_telemetry["cal_locked"] = False
+    return {"status": "success", "message": "Perintah CLEAR_CALIBRATION berhasil dikirim ke ESP32", "payload": payload}
+
+@app.websocket("/ws")
+async def websocket_alias(websocket: WebSocket):
+    await websocket_esp32(websocket)
+
 from fastapi.staticfiles import StaticFiles
+
+class SafeStaticFiles(StaticFiles):
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "websocket":
+            await send({"type": "websocket.close", "code": 1000})
+            return
+        await super().__call__(scope, receive, send)
 
 # Serve frontend statis untuk penggunaan lokal (di luar Vercel)
 import os
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 if os.path.exists(frontend_dir):
-    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+    app.mount("/", SafeStaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=True)

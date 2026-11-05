@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /* ═══════════════════════════════════════════════════════════════
-   FalakHub · Skydome.js
+   HILTRON · Skydome.js
    Full 24-hour sky cycle GLSL shader.
    Celestial positions are ABSOLUTE — driven entirely by ephemeris
    data from the FastAPI backend. NO dt-based fake rotation.
@@ -394,11 +394,15 @@ export function initSkydome(container, labelsContainer) {
             // ── Interpolate alt/az with time offset ───────────────
             // 0.25 deg/min altitude drop (approx 15°/hour)
             // 0.25 deg/min azimuth change
-            const offsetH  = timeOffsetMinutes / 60;
+            const offsetH  = (appState.effectiveOffsetHours !== undefined) 
+                ? appState.effectiveOffsetHours 
+                : (timeOffsetMinutes / 60);
             const sunAlt   = baseSunAlt  - offsetH * 15;
-            const sunAz    = baseSunAz   + offsetH * 15;
+            let   sunAz    = (baseSunAz   + offsetH * 15) % 360;
+            if (sunAz < 0) sunAz += 360;
             const moonAlt  = baseMoonAlt - offsetH * 14.5;
-            const moonAz   = baseMoonAz  + offsetH * 14.5;
+            let   moonAz   = (baseMoonAz  + offsetH * 14.5) % 360;
+            if (moonAz < 0) moonAz += 360;
 
             curSunAlt  = sunAlt;
             curSunAz   = sunAz;

@@ -3,7 +3,7 @@ import { initSkydome }  from './skydome.js';
 import { fetchEphemeris, fetchMabimsMap, fetchGeocode, fetchTelemetry } from './api.js';
 
 /* ═══════════════════════════════════════════════════════════════
-   FalakHub · main.js
+   HILTRON · main.js
    Unified state manager. Drives both the 3D Globe and Skydome
    from a single source of truth: real ephemeris data from the
    FastAPI/Skyfield backend.
@@ -36,6 +36,15 @@ let appState = {
     illumination:  0,
 };
 
+// ── Dynamic Simulation Engine State ───────────────────────────
+let simState = {
+    isRunning: true,
+    speedMultiplier: 1, // 1x = waktu nyata (real-time), 10x, 60x
+    lastTickMs: Date.now(),
+    simulatedElapsedSeconds: 0,
+    lastAutoSyncTime: Date.now(),
+};
+
 // ── City Registry (dynamic — unlimited) ───────────────────────
 const CITIES = [
     { name: 'Jakarta, Indonesia',    lat: -6.2088,  lon: 106.8456 },
@@ -53,6 +62,64 @@ let globe, skydome;
 const $ = (id) => document.getElementById(id);
 function setText(id, val) { const el = $(id); if (el) el.textContent = val; }
 function setClass(id, cls) { const el = $(id); if (el) el.className = cls; }
+
+// ── Toast Notification Helper ─────────────────────────────────
+function showToast(message, type = 'success') {
+    let toast = document.getElementById('hiltron-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'hiltron-toast';
+        toast.style.cssText = `
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            z-index: 99999;
+            padding: 12px 22px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            pointer-events: none;
+        `;
+        document.body.appendChild(toast);
+    }
+    
+    if (type === 'success') {
+        toast.style.background = 'rgba(16, 185, 129, 0.95)';
+        toast.style.color = '#FFFFFF';
+        toast.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+        toast.innerHTML = `<i class="fas fa-check-circle" style="font-size:16px;"></i> <span>${message}</span>`;
+    } else if (type === 'warning') {
+        toast.style.background = 'rgba(245, 158, 11, 0.95)';
+        toast.style.color = '#FFFFFF';
+        toast.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+        toast.innerHTML = `<i class="fas fa-exclamation-triangle" style="font-size:16px;"></i> <span>${message}</span>`;
+    } else {
+        toast.style.background = 'rgba(239, 68, 68, 0.95)';
+        toast.style.color = '#FFFFFF';
+        toast.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+        toast.innerHTML = `<i class="fas fa-circle-xmark" style="font-size:16px;"></i> <span>${message}</span>`;
+    }
+    
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(-20px)';
+    }, 4500);
+}
 
 // ── UI Setup ──────────────────────────────────────────────────
 function setupUI() {
@@ -92,13 +159,89 @@ function setupUI() {
         appState.timeOffsetMinutes = parseInt(e.target.value);
         updateSliderDisplay();
         updateUI();
-        if (skydome) skydome.updateSimulation(appState);
+    });
+
+    // Live Play / Pause Toggle
+    $('btn-time-play')?.addEventListener('click', () => {
+        simState.isRunning = !simState.isRunning;
+        simState.lastTickMs = Date.now();
+        const icon = $('icon-time-play');
+        const text = $('text-time-play');
+        if (simState.isRunning) {
+            if (icon) { icon.className = 'fas fa-pause'; icon.style.color = '#10B981'; }
+            if (text) text.textContent = 'Live Ticking';
+        } else {
+            if (icon) { icon.className = 'fas fa-play'; icon.style.color = '#F59E0B'; }
+            if (text) text.textContent = 'Jeda';
+        }
+    });
+
+    // Reset ke Waktu Sekarang (Offset 0 & 1x speed)
+    $('btn-time-reset')?.addEventListener('click', () => {
+        appState.timeOffsetMinutes = 0;
+        $('time-slider').value = '0';
+        updateSliderDisplay();
+        simState.speedMultiplier = 1;
+        simState.isRunning = true;
+        simState.simulatedElapsedSeconds = 0;
+        simState.lastTickMs = Date.now();
+        const icon = $('icon-time-play');
+        const text = $('text-time-play');
+        if (icon) { icon.className = 'fas fa-pause'; icon.style.color = '#10B981'; }
+        if (text) text.textContent = 'Live Ticking';
+        document.querySelectorAll('.speed-btn').forEach(b => {
+            const is1x = b.dataset.speed === '1';
+            b.classList.toggle('active', is1x);
+            b.style.color = is1x ? '#10B981' : 'var(--c-muted)';
+            b.style.background = is1x ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)';
+        });
+        syncData();
+    });
+
+    // Speed buttons (1x, 10x, 60x)
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const speed = parseInt(btn.dataset.speed) || 1;
+            simState.speedMultiplier = speed;
+            simState.isRunning = true;
+            simState.lastTickMs = Date.now();
+            const icon = $('icon-time-play');
+            const text = $('text-time-play');
+            if (icon) { icon.className = 'fas fa-pause'; icon.style.color = '#10B981'; }
+            if (text) text.textContent = 'Live Ticking';
+
+            document.querySelectorAll('.speed-btn').forEach(b => {
+                const isActive = b === btn;
+                b.classList.toggle('active', isActive);
+                b.style.color = isActive ? '#10B981' : 'var(--c-muted)';
+                b.style.background = isActive ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)';
+            });
+        });
     });
 
     // Date Picker
     $('date-picker').value = appState.date;
     $('date-picker').addEventListener('change', (e) => {
         appState.date = e.target.value;
+        simState.simulatedElapsedSeconds = 0;
+        simState.lastTickMs = Date.now();
+        syncData();
+        fetchMap();
+    });
+
+    // Date "Hari Ini" quick button
+    $('btn-date-today')?.addEventListener('click', () => {
+        const localNow = new Date();
+        const todayStr = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
+        appState.date = todayStr;
+        $('date-picker').value = todayStr;
+        appState.timeOffsetMinutes = 0;
+        $('time-slider').value = '0';
+        updateSliderDisplay();
+        simState.speedMultiplier = 1;
+        simState.isRunning = true;
+        simState.simulatedElapsedSeconds = 0;
+        simState.lastTickMs = Date.now();
         syncData();
         fetchMap();
     });
@@ -132,9 +275,96 @@ function setupUI() {
 
     // GPS / Current Location
     let myLocationIdx = null;
+
+    async function detectAndApplyDeviceGPS() {
+        if (!navigator.geolocation) {
+            alert('Browser Anda tidak mendukung deteksi lokasi (GPS).');
+            return;
+        }
+
+        const iconGps = $('btn-gps')?.querySelector('i');
+        const btnDetectDevice = $('btn-detect-device-gps');
+
+        if (iconGps) iconGps.className = 'fas fa-spinner fa-spin';
+        if (btnDetectDevice) {
+            btnDetectDevice.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i> Mendeteksi Lokasi GPS...`;
+            btnDetectDevice.style.background = "#F59E0B";
+        }
+
+        setApiState('syncing');
+        setText('api-status-text', 'Mencari Lokasi GPS…');
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                try {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    const accuracy = Math.round(pos.coords.accuracy);
+
+                    // Update Tampilan Kartu GPS Hardware/Device Panel
+                    setText('gps-lat', `${lat.toFixed(5)}°`);
+                    setText('gps-lon', `${lon.toFixed(5)}°`);
+                    setText('gps-sats', `Akurasi ±${accuracy}m`);
+
+                    const badge = $('gps-lock-badge');
+                    if (badge) {
+                        badge.textContent = "TERKUNCI (LOCKED)";
+                        badge.style.background = "rgba(16,185,129,0.2)";
+                        badge.style.color = "#10B981";
+                        badge.style.border = "1px solid rgba(16,185,129,0.3)";
+                    }
+
+                    let name = `Lokasi Perangkat (${lat.toFixed(4)}°, ${lon.toFixed(4)}°)`;
+                    const rev = await reverseGeocodeNominatim(lat, lon);
+                    if (rev) name = rev;
+
+                    if (myLocationIdx !== null && CITIES[myLocationIdx]) {
+                        CITIES[myLocationIdx].name = name;
+                        CITIES[myLocationIdx].lat  = lat;
+                        CITIES[myLocationIdx].lon  = lon;
+                    } else {
+                        CITIES.push({ name, lat, lon });
+                        myLocationIdx = CITIES.length - 1;
+                        if (globe) globe.addMarker(lat, lon);
+                    }
+
+                    renderCityDropdown();
+                    await selectCity(myLocationIdx);
+
+                    if (btnDetectDevice) {
+                        btnDetectDevice.innerHTML = `<i class="fas fa-check" style="margin-right:6px;"></i> Lokasi Terkunci!`;
+                        btnDetectDevice.style.background = "#10B981";
+                        setTimeout(() => {
+                            btnDetectDevice.innerHTML = `<i class="fas fa-crosshairs" style="margin-right:6px;"></i> Ambil Lokasi GPS HP / Laptop`;
+                        }, 3000);
+                    }
+                } catch (err) {
+                    console.error("Error during GPS selectCity:", err);
+                    setApiState('error');
+                    setText('api-status-text', 'Gagal memproses data lokasi');
+                    setTimeout(() => setApiState('ok'), 3000);
+                } finally {
+                    if (iconGps) iconGps.className = 'fas fa-crosshairs';
+                }
+            },
+            (err) => {
+                console.warn("Geolocation error:", err);
+                setApiState('error');
+                setText('api-status-text', 'Akses GPS Gagal/Ditolak');
+                setTimeout(() => setApiState('ok'), 3000);
+                if (iconGps) iconGps.className = 'fas fa-crosshairs';
+                if (btnDetectDevice) {
+                    btnDetectDevice.innerHTML = `<i class="fas fa-crosshairs" style="margin-right:6px;"></i> Coba Lagi Ambil Lokasi`;
+                    btnDetectDevice.style.background = "#10B981";
+                }
+                alert("Gagal mengakses GPS. Pastikan izin lokasi diberikan pada browser.");
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+    }
+
     $('btn-gps')?.addEventListener('click', () => {
         if (myLocationIdx !== null && CITIES[myLocationIdx]) {
-            // Already have location, just pan to it
             if (appState.activeCityIdx === myLocationIdx) {
                 if (globe) globe.focusCity(myLocationIdx);
             } else {
@@ -142,49 +372,7 @@ function setupUI() {
             }
             return;
         }
-
-        if (!navigator.geolocation) {
-            alert('Browser Anda tidak mendukung deteksi lokasi (GPS).');
-            return;
-        }
-
-        setApiState('syncing');
-        setText('api-status-text', 'Mencari Satelit GPS…');
-        const icon = $('btn-gps').querySelector('i');
-        if (icon) icon.className = 'fas fa-spinner fa-spin';
-
-        navigator.geolocation.getCurrentPosition(
-            async (pos) => {
-                try {
-                    const lat = pos.coords.latitude;
-                    const lon = pos.coords.longitude;
-                    let name = "Lokasi Saya";
-                    
-                    const rev = await reverseGeocodeNominatim(lat, lon);
-                    if (rev) name = rev;
-
-                    CITIES.push({ name, lat, lon });
-                    if (globe) globe.addMarker(lat, lon);
-                    myLocationIdx = CITIES.length - 1;
-                    renderCityDropdown();
-                    await selectCity(myLocationIdx);
-                } catch (err) {
-                    console.error("Error during GPS selectCity:", err);
-                    setApiState('error');
-                    setText('api-status-text', 'Gagal memproses data lokasi');
-                    setTimeout(() => setApiState('ok'), 3000);
-                } finally {
-                    if (icon) icon.className = 'fas fa-crosshairs';
-                }
-            },
-            (err) => {
-                setApiState('error');
-                setText('api-status-text', 'Akses GPS Gagal/Ditolak');
-                setTimeout(() => setApiState('ok'), 3000);
-                if (icon) icon.className = 'fas fa-crosshairs';
-            },
-            { enableHighAccuracy: true, timeout: 15000 }
-        );
+        detectAndApplyDeviceGPS();
     });
 
     // Reset skydome camera
@@ -238,10 +426,11 @@ function setupUI() {
         const trackerStatus = $('tracker-status');
         if (!trackerStatus) return;
 
-        // Gunakan posisi Bulan/Hilal aktif sesuai slider
-        const offsetH   = appState.timeOffsetMinutes / 60;
+        // Gunakan posisi Bulan/Hilal aktif sesuai simulasi dinamis
+        const offsetH   = (simState.simulatedElapsedSeconds / 3600) + (appState.timeOffsetMinutes / 60);
         const mAlt = appState.baseMoonAlt - offsetH * 14.5;
-        const mAz  = appState.baseMoonAz  + offsetH * 14.5;
+        let mAz  = (appState.baseMoonAz  + offsetH * 14.5) % 360;
+        if (mAz < 0) mAz += 360;
 
         const targetData = {
             target_azimuth: parseFloat(mAz.toFixed(2)),
@@ -265,8 +454,16 @@ function setupUI() {
             const result = await response.json();
             
             if (response.ok) {
-                trackerStatus.style.color = "#10B981"; // Green
-                trackerStatus.innerText = `Status: Berhasil!\nTarget: Azimuth ${targetData.target_azimuth}°, Altitude ${targetData.target_altitude}°`;
+                if (result.status === 'warning') {
+                    trackerStatus.style.color = "#F59E0B"; // Orange
+                    trackerStatus.innerText = `Status: ESP32 Belum Terhubung!\nPeriksa Wi-Fi & WebSocket ESP32.`;
+                } else {
+                    trackerStatus.style.color = "#10B981"; // Green
+                    const altNote = targetData.target_altitude < 0 
+                        ? `\n(Hilal di bawah ufuk, teleskop diarahkan ke ufuk barat 0°)` 
+                        : '';
+                    trackerStatus.innerText = `Status: Berhasil Terkirim!\nTarget: Azimuth ${targetData.target_azimuth}°, Altitude ${targetData.target_altitude}°${altNote}`;
+                }
             } else {
                 trackerStatus.style.color = "#EF4444"; // Red
                 trackerStatus.innerText = `Status: Gagal dari Server.\nError: ${JSON.stringify(result)}`;
@@ -275,6 +472,204 @@ function setupUI() {
             console.error("Error:", error);
             trackerStatus.style.color = "#EF4444";
             trackerStatus.innerText = "Status: Terjadi kesalahan jaringan.";
+        }
+    });
+
+    // ── Set Home / Kalibrasi Titik Nol (0° Ufuk & Hadap Utara) ──
+    $('btn-set-home')?.addEventListener('click', async () => {
+        const trackerStatus = $('tracker-status');
+        if (trackerStatus) {
+            trackerStatus.innerText = "Status: Mengirim instruksi Kalibrasi Titik Nol ke ESP32...";
+            trackerStatus.style.color = "#3B82F6";
+        }
+        try {
+            const { API_BASE } = await import('./api.js');
+            const res = await fetch(`${API_BASE}/set-home`, { method: 'POST' });
+            const resData = await res.json();
+            if (trackerStatus) {
+                if (resData.status === 'success') {
+                    trackerStatus.style.color = "#10B981";
+                    trackerStatus.innerText = "Status: Titik Nol Berhasil Ditetapkan!\n(Posisi saat ini = 0° Hadap Utara & 0° Ufuk Datar)";
+                } else {
+                    trackerStatus.style.color = "#F59E0B";
+                    trackerStatus.innerText = `Status: ${resData.message || 'ESP32 belum terhubung'}`;
+                }
+            }
+        } catch (err) {
+            if (trackerStatus) {
+                trackerStatus.style.color = "#EF4444";
+                trackerStatus.innerText = "Status: Gagal menghubungi server backend.";
+            }
+        }
+    });
+
+    // ── Save Calibration to EEPROM / NVS ──
+    const btnSaveCalib = $('btn-save-calib');
+    btnSaveCalib?.addEventListener('click', async () => {
+        const calMsg = $('cal-status-msg');
+        const calBadge = $('cal-locked-badge');
+        const originalHtml = btnSaveCalib.innerHTML;
+        
+        btnSaveCalib.disabled = true;
+        btnSaveCalib.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Merekam ke EEPROM...`;
+        btnSaveCalib.style.background = 'rgba(59, 130, 246, 0.25)';
+        btnSaveCalib.style.color = '#60A5FA';
+        btnSaveCalib.style.border = '1px solid rgba(59, 130, 246, 0.4)';
+        
+        if (calMsg) {
+            calMsg.style.display = 'block';
+            calMsg.style.background = 'rgba(59, 130, 246, 0.15)';
+            calMsg.style.color = '#93C5FD';
+            calMsg.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+            calMsg.innerHTML = `<i class="fas fa-satellite-dish fa-spin" style="margin-right:6px;"></i> Mengirim instruksi rekam ke Flash NVS ESP32...`;
+        }
+
+        try {
+            const { API_BASE } = await import('./api.js');
+            const res = await fetch(`${API_BASE}/save-calibration`, { method: 'POST' });
+            
+            if (!res.ok) {
+                if (res.status === 405 || res.status === 404) {
+                    throw new Error("Server backend perlu di-restart agar rute baru aktif! (Tekan Ctrl+C di terminal lalu jalankan lagi)");
+                }
+                const errJson = await res.json().catch(() => ({}));
+                throw new Error(errJson.detail || `Server error (${res.status})`);
+            }
+
+            const resData = await res.json();
+            
+            if (resData.status === 'success') {
+                btnSaveCalib.innerHTML = `<i class="fas fa-check-circle"></i> Berhasil Direkam & Dikunci!`;
+                btnSaveCalib.style.background = '#059669';
+                btnSaveCalib.style.color = '#FFFFFF';
+                btnSaveCalib.style.border = '1px solid #10B981';
+                
+                if (calBadge) {
+                    calBadge.innerHTML = '<i class="fas fa-shield-alt"></i> EEPROM TERKUNCI';
+                    calBadge.style.background = 'rgba(16,185,129,0.2)';
+                    calBadge.style.color = '#10B981';
+                    calBadge.style.border = '1px solid rgba(16,185,129,0.4)';
+                }
+
+                if (calMsg) {
+                    calMsg.style.display = 'block';
+                    calMsg.style.background = 'rgba(16, 185, 129, 0.2)';
+                    calMsg.style.color = '#10B981';
+                    calMsg.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+                    calMsg.innerHTML = `<i class="fas fa-check-circle" style="margin-right:6px;"></i> <strong>SUKSES:</strong> Kalibrasi 3/3/3/3 berhasil disimpan permanen ke Flash NVS ESP32! Anda tidak perlu memutar alat lagi saat dinyalakan berikutnya.`;
+                }
+
+                showToast("Kalibrasi Berhasil Direkam ke EEPROM ESP32! (Terkunci)", "success");
+            } else {
+                btnSaveCalib.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Gagal Menyimpan`;
+                btnSaveCalib.style.background = 'rgba(245, 158, 11, 0.2)';
+                btnSaveCalib.style.color = '#F59E0B';
+                
+                if (calMsg) {
+                    calMsg.style.display = 'block';
+                    calMsg.style.background = 'rgba(245, 158, 11, 0.15)';
+                    calMsg.style.color = '#F59E0B';
+                    calMsg.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+                    calMsg.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right:6px;"></i> ${resData.message || 'ESP32 belum terhubung ke Server.'}`;
+                }
+
+                showToast(resData.message || "ESP32 belum terhubung!", "warning");
+            }
+        } catch (err) {
+            btnSaveCalib.innerHTML = `<i class="fas fa-circle-xmark"></i> ${err.message && err.message.includes('restart') ? 'Restart Server' : 'Gagal Menyimpan'}`;
+            btnSaveCalib.style.background = 'rgba(239, 68, 68, 0.2)';
+            btnSaveCalib.style.color = '#EF4444';
+            
+            if (calMsg) {
+                calMsg.style.display = 'block';
+                calMsg.style.background = 'rgba(239, 68, 68, 0.15)';
+                calMsg.style.color = '#EF4444';
+                calMsg.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                calMsg.innerHTML = `<i class="fas fa-times-circle" style="margin-right:6px;"></i> ${err.message || 'Gagal menghubungi backend API.'}`;
+            }
+
+            showToast(err.message || "Gagal menghubungi server backend.", "error");
+        } finally {
+            setTimeout(() => {
+                btnSaveCalib.disabled = false;
+                btnSaveCalib.innerHTML = originalHtml;
+                btnSaveCalib.style.background = 'rgba(16,185,129,0.15)';
+                btnSaveCalib.style.color = '#10B981';
+                btnSaveCalib.style.border = '1px solid rgba(16,185,129,0.3)';
+            }, 6000);
+        }
+    });
+
+    // ── Reset Calibration in EEPROM / NVS ──
+    const btnClearCalib = $('btn-clear-calib');
+    btnClearCalib?.addEventListener('click', async () => {
+        if (!confirm("Apakah Anda yakin ingin mereset data kalibrasi BNO055 di EEPROM Flash ESP32?")) return;
+        
+        const calMsg = $('cal-status-msg');
+        const calBadge = $('cal-locked-badge');
+        
+        try {
+            const { API_BASE } = await import('./api.js');
+            const res = await fetch(`${API_BASE}/clear-calibration`, { method: 'POST' });
+            const resData = await res.json();
+            
+            if (resData.status === 'success') {
+                if (calBadge) {
+                    calBadge.innerHTML = '<i class="fas fa-unlock"></i> BELUM TERSIMPAN';
+                    calBadge.style.background = 'rgba(239,68,68,0.15)';
+                    calBadge.style.color = '#EF4444';
+                    calBadge.style.border = '1px solid rgba(239,68,68,0.3)';
+                }
+                if (calMsg) {
+                    calMsg.style.display = 'block';
+                    calMsg.style.background = 'rgba(245, 158, 11, 0.15)';
+                    calMsg.style.color = '#F59E0B';
+                    calMsg.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+                    calMsg.innerHTML = `<i class="fas fa-rotate-left" style="margin-right:6px;"></i> Profil kalibrasi di EEPROM NVS berhasil dihapus.`;
+                }
+                showToast("Profil EEPROM berhasil di-reset.", "warning");
+            } else {
+                showToast(resData.message || "Gagal mereset kalibrasi", "error");
+            }
+        } catch (err) {
+            showToast("Gagal menghubungi server backend.", "error");
+        }
+    });
+
+    // ── Device GPS Detection (Laptop / Smartphone Browser Geolocation) ──
+    $('btn-detect-device-gps')?.addEventListener('click', () => {
+        detectAndApplyDeviceGPS();
+    });
+
+    // Apply Hardware GPS Coordinates (dari Modul NEO-6M ESP32 jika tersedia)
+    $('btn-apply-gps')?.addEventListener('click', async () => {
+        if (!latestGpsData) return;
+        
+        const gpsCityName = `Lokasi Modul GPS (${latestGpsData.lat.toFixed(4)}°, ${latestGpsData.lon.toFixed(4)}°)`;
+        
+        let existingIdx = CITIES.findIndex(c => c.isGps);
+        if (existingIdx !== -1) {
+            CITIES[existingIdx].name = gpsCityName;
+            CITIES[existingIdx].lat  = latestGpsData.lat;
+            CITIES[existingIdx].lon  = latestGpsData.lon;
+            await selectCity(existingIdx);
+        } else {
+            CITIES.unshift({
+                name: gpsCityName,
+                lat: latestGpsData.lat,
+                lon: latestGpsData.lon,
+                isGps: true
+            });
+            await selectCity(0);
+        }
+
+        const btnGps = $('btn-apply-gps');
+        if (btnGps) {
+            const originalText = btnGps.innerHTML;
+            btnGps.innerHTML = `<i class="fas fa-check" style="margin-right:6px;"></i> Koordinat Modul Diterapkan!`;
+            setTimeout(() => {
+                btnGps.innerHTML = originalText;
+            }, 2500);
         }
     });
 }
@@ -362,18 +757,31 @@ async function selectCity(idx) {
 }
 
 // ── Sync Data from Backend ────────────────────────────────────
-async function syncData() {
+async function syncData(options = { quiet: false }) {
     const city = CITIES[appState.activeCityIdx];
-    setApiState('syncing');
-    setText('api-status-text', 'Sinkronisasi…');
+    if (!options.quiet) {
+        setApiState('syncing');
+        setText('api-status-text', 'Sinkronisasi…');
+    }
 
-    // If the selected date is today, use current time, else use noon UTC on that date
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Tentukan waktu target (live real-time atau kombinasi jam hari ini untuk tanggal terpilih)
+    const localNow = new Date();
+    const todayLocal = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
+    const todayUtc = localNow.toISOString().split('T')[0];
+
     let ts;
-    if (appState.date === todayStr) {
-        ts = new Date().toISOString();
+    if (appState.date === todayUtc || appState.date === todayLocal) {
+        // Mode waktu nyata: gunakan jam saat ini persis (+ offset slider jika ada)
+        const targetDate = new Date(Date.now() + (appState.timeOffsetMinutes * 60000));
+        ts = targetDate.toISOString();
     } else {
-        ts = new Date(appState.date + "T12:00:00Z").toISOString();
+        // Tanggal lain: terapkan jam, menit, detik saat ini pada tanggal tersebut (+ offset slider)
+        const h = String(localNow.getUTCHours()).padStart(2, '0');
+        const m = String(localNow.getUTCMinutes()).padStart(2, '0');
+        const s = String(localNow.getUTCSeconds()).padStart(2, '0');
+        const baseIso = `${appState.date}T${h}:${m}:${s}Z`;
+        const targetDate = new Date(new Date(baseIso).getTime() + (appState.timeOffsetMinutes * 60000));
+        ts = targetDate.toISOString();
     }
 
     const data = await fetchEphemeris(city.lat, city.lon, appState.date, ts);
@@ -395,14 +803,10 @@ async function syncData() {
         appState.status        = data.mabims_status ?? 'Tidak Diketahui';
         appState.illumination  = data.illumination  ?? 0;
 
-        // Update Globe (absolute ephemeris)
-        if (globe) {
-            globe.setEphemeris(
-                appState.baseGMST,
-                appState.baseSunRa,  appState.baseSunDec,
-                appState.baseMoonRa, appState.baseMoonDec
-            );
-        }
+        // Reset akumulasi detik simulasi karena koordinat sudah di-reanchor ke NASA JPL terbaru
+        simState.simulatedElapsedSeconds = 0;
+        simState.lastTickMs = Date.now();
+        simState.lastAutoSyncTime = Date.now();
 
         // Update Hijri/date display
         if (data.hijri) {
@@ -410,13 +814,16 @@ async function syncData() {
         }
 
         updateUI();
-        if (skydome) skydome.updateSimulation(appState);
 
-        setApiState('ok');
-        setText('api-status-text', 'API Sinkron');
+        if (!options.quiet) {
+            setApiState('ok');
+            setText('api-status-text', 'API Sinkron');
+        }
     } else {
-        setApiState('error');
-        setText('api-status-text', 'API Error');
+        if (!options.quiet) {
+            setApiState('error');
+            setText('api-status-text', 'API Error');
+        }
     }
 }
 
@@ -426,26 +833,72 @@ async function fetchMap() {
     if (data && globe) globe.drawMabimsMap(data);
 }
 
-// ── Update All UI Elements ────────────────────────────────────
-function updateUI() {
-    const offsetH   = appState.timeOffsetMinutes / 60;
-    const activeTime = new Date(appState.baseTime.getTime() + appState.timeOffsetMinutes * 60000);
+// ── Dynamic Real-Time Simulation Engine ───────────────────────
+function tickSimulation() {
+    const now = Date.now();
+    const deltaRealSec = (now - simState.lastTickMs) / 1000;
+    simState.lastTickMs = now;
 
-    // Time displays
-    setText('val-time', activeTime.toLocaleTimeString('id-ID', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC'
-    }) + ' UTC');
-    if (appState.sunsetTime) {
-        setText('val-sunset', appState.sunsetTime.toLocaleTimeString('id-ID', {
-            hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
-        }) + ' UTC');
+    if (simState.isRunning && deltaRealSec > 0 && deltaRealSec < 5) {
+        simState.simulatedElapsedSeconds += deltaRealSec * simState.speedMultiplier;
+
+        // Background JPL ephemeris re-sync setiap 60 detik saat berjalan di 1x real-time
+        if (simState.speedMultiplier === 1 && (now - simState.lastAutoSyncTime > 60000)) {
+            simState.lastAutoSyncTime = now;
+            syncData({ quiet: true });
+        }
     }
 
-    // Interpolated values for time slider
-    const sAlt = appState.baseSunAlt  - offsetH * 15;
-    const sAz  = appState.baseSunAz   + offsetH * 15;
-    const mAlt = appState.baseMoonAlt - offsetH * 14.5;
-    const mAz  = appState.baseMoonAz  + offsetH * 14.5;
+    updateUI();
+}
+
+// ── Update All UI Elements ────────────────────────────────────
+function updateUI() {
+    // Total offset efektif dalam jam dari baseTime: detik dinamis berjalan + offset slider manual
+    const elapsedH = simState.simulatedElapsedSeconds / 3600;
+    const sliderH = appState.timeOffsetMinutes / 60;
+    const totalOffsetH = elapsedH + sliderH;
+
+    const activeTime = new Date(appState.baseTime.getTime() + (simState.simulatedElapsedSeconds * 1000) + (appState.timeOffsetMinutes * 60000));
+
+    // Time displays (Local WIB/sistem dan UTC)
+    const pad = (n) => String(n).padStart(2, '0');
+    const locH = pad(activeTime.getHours());
+    const locM = pad(activeTime.getMinutes());
+    const locS = pad(activeTime.getSeconds());
+    const utcH = pad(activeTime.getUTCHours());
+    const utcM = pad(activeTime.getUTCMinutes());
+    const utcS = pad(activeTime.getUTCSeconds());
+
+    // Deteksi singkatan zona waktu lokal (misal: WIB, WITA, WIT)
+    let tzAbbr = 'WIB';
+    try {
+        const parts = new Intl.DateTimeFormat('id-ID', { timeZoneName: 'short' }).formatToParts(activeTime);
+        const match = parts.find(p => p.type === 'timeZoneName');
+        if (match && match.value) tzAbbr = match.value;
+    } catch (_) {}
+
+    setText('val-time', `${locH}:${locM}:${locS} ${tzAbbr}`);
+    setText('val-time-utc', `${utcH}:${utcM}:${utcS} UTC`);
+
+    if (appState.sunsetTime) {
+        const sH = pad(appState.sunsetTime.getHours());
+        const sM = pad(appState.sunsetTime.getMinutes());
+        setText('val-sunset', `${sH}:${sM} ${tzAbbr}`);
+    }
+
+    // Interpolated values for celestial bodies
+    const sAlt = appState.baseSunAlt  - totalOffsetH * 15;
+    let   sAz  = (appState.baseSunAz   + totalOffsetH * 15) % 360;
+    if (sAz < 0) sAz += 360;
+
+    const mAlt = appState.baseMoonAlt - totalOffsetH * 14.5;
+    let   mAz  = (appState.baseMoonAz  + totalOffsetH * 14.5) % 360;
+    if (mAz < 0) mAz += 360;
+
+    // GMST: 1 mean solar hour = 1.00273790935 mean sidereal hours
+    let activeGMST = (appState.baseGMST + totalOffsetH * 1.00273790935) % 24;
+    if (activeGMST < 0) activeGMST += 24;
 
     setText('val-azisun',   `${sAz.toFixed(2)}°`);
     setText('val-altisun',  `${sAlt.toFixed(2)}°`);
@@ -454,7 +907,7 @@ function updateUI() {
     setText('val-fraksi',   `${(appState.illumination * 100).toFixed(2)}%`);
     setText('ui-tinggi',    `${appState.baseArcv.toFixed(2)}°`);
     setText('ui-elongasi',  `${appState.baseArcl.toFixed(2)}°`);
-    setText('val-gmst',     `${appState.baseGMST.toFixed(4)} j`);
+    setText('val-gmst',     `${activeGMST.toFixed(4)} j`);
 
     // MABIMS Criteria check display
     const arcvOk = appState.baseArcv >= 3;
@@ -470,10 +923,17 @@ function updateUI() {
         critArcl.className   = `hud-value ${arclOk ? 'neon' : 'red'}`;
     }
 
-    // Update globe with interpolated positions on slider move
+    // Update globe dengan rotasi dinamis bumi sesuai GMST aktif
     if (globe) {
-        const activeGMST = appState.baseGMST + offsetH;
         globe.setEphemeris(activeGMST, appState.baseSunRa, appState.baseSunDec, appState.baseMoonRa, appState.baseMoonDec);
+    }
+
+    // Update skydome simulation
+    if (skydome) {
+        skydome.updateSimulation({
+            ...appState,
+            effectiveOffsetHours: totalOffsetH,
+        });
     }
 
     // Status Card
@@ -523,7 +983,9 @@ function setApiState(state) {
     }
 }
 
-// ── BNO055 Telemetry Updater ──────────────────────────────────
+// ── Hardware Telemetry & GPS Updater ──────────────────────────
+let latestGpsData = null;
+
 async function updateTelemetryUI() {
     const data = await fetchTelemetry();
     if (!data) return;
@@ -532,6 +994,12 @@ async function updateTelemetryUI() {
         setText('tel-azimuth', `${data.azimuth.toFixed(2)}°`);
         setText('tel-altitude', `${data.altitude.toFixed(2)}°`);
         
+        const isLocked = Boolean(data.cal_locked);
+        const effectiveSys   = isLocked ? 3 : data.cal_sys;
+        const effectiveGyro  = isLocked ? 3 : data.cal_gyro;
+        const effectiveAccel = isLocked ? 3 : data.cal_accel;
+        const effectiveMag   = isLocked ? 3 : data.cal_mag;
+
         const updateCal = (id, val) => {
             const el = $(id);
             if (el) {
@@ -539,22 +1007,71 @@ async function updateTelemetryUI() {
                 el.style.color = val === 3 ? '#10B981' : (val > 0 ? '#F59E0B' : '#EF4444');
             }
         };
-        updateCal('cal-sys', data.cal_sys);
-        updateCal('cal-gyro', data.cal_gyro);
-        updateCal('cal-accel', data.cal_accel);
-        updateCal('cal-mag', data.cal_mag);
+        updateCal('cal-sys', effectiveSys);
+        updateCal('cal-gyro', effectiveGyro);
+        updateCal('cal-accel', effectiveAccel);
+        updateCal('cal-mag', effectiveMag);
+
+        // Update EEPROM Calibration Lock Badge
+        const calBadge = $('cal-locked-badge');
+        const calNotice = $('cal-locked-notice');
+        if (calBadge) {
+            if (data.cal_locked) {
+                calBadge.innerHTML = '<i class="fas fa-shield-alt"></i> EEPROM TERKUNCI';
+                calBadge.style.background = 'rgba(16,185,129,0.2)';
+                calBadge.style.color = '#10B981';
+                calBadge.style.border = '1px solid rgba(16,185,129,0.4)';
+                calBadge.title = 'Profil kalibrasi BNO055 tersimpan di Flash NVS aktif. Anda tidak perlu memutar alat lagi.';
+                if (calNotice) calNotice.style.display = 'block';
+            } else {
+                calBadge.innerHTML = '<i class="fas fa-unlock"></i> BELUM TERSIMPAN';
+                calBadge.style.background = 'rgba(239,68,68,0.15)';
+                calBadge.style.color = '#EF4444';
+                calBadge.style.border = '1px solid rgba(239,68,68,0.3)';
+                calBadge.title = 'Belum ada profil kalibrasi di Flash NVS. Lakukan gerakan memadai lalu klik Simpan.';
+                if (calNotice) calNotice.style.display = 'none';
+            }
+        }
+
+        // Update Hardware GPS Telemetry (hanya update jika modul hardware mendapatkan data fix)
+        if (data.gps_valid) {
+            latestGpsData = { lat: data.gps_lat, lon: data.gps_lon };
+            setText('gps-lat', `${data.gps_lat.toFixed(5)}°`);
+            setText('gps-lon', `${data.gps_lon.toFixed(5)}°`);
+            if (sats) sats.textContent = `${data.gps_sats || 0} Satelit (Modul)`;
+            if (badge) {
+                badge.textContent = "TERKUNCI (MODUL)";
+                badge.style.background = "rgba(16,185,129,0.2)";
+                badge.style.color = "#10B981";
+                badge.style.border = "1px solid rgba(16,185,129,0.3)";
+            }
+            if (btnGps) {
+                btnGps.style.display = "block";
+                btnGps.disabled = false;
+                btnGps.style.background = "#059669";
+                btnGps.style.color = "#FFFFFF";
+                btnGps.style.cursor = "pointer";
+            }
+        }
         
         const ts = $('tracker-status');
-        if (ts && ts.innerText.includes("Menunggu")) {
+        if (ts && (ts.innerText.includes("Menunggu") || ts.innerText.includes("Terputus") || ts.innerText.includes("Offline"))) {
             ts.innerText = "Status: ESP32 Terhubung & Siap";
             ts.style.color = "#10B981";
         }
     } else {
         setText('tel-azimuth', `--`);
         setText('tel-altitude', `--`);
+        const calBadge = $('cal-locked-badge');
+        if (calBadge) {
+            calBadge.innerHTML = '<i class="fas fa-power-off"></i> OFFLINE';
+            calBadge.style.background = 'rgba(255,255,255,0.05)';
+            calBadge.style.color = 'rgba(226,232,240,0.4)';
+            calBadge.style.border = '1px solid var(--c-border)';
+        }
         const ts = $('tracker-status');
-        if (ts && !ts.innerText.includes("Mengirim") && !ts.innerText.includes("Berhasil")) {
-            ts.innerText = "Status: ESP32 Terputus / Tidak Aktif";
+        if (ts && !ts.innerText.includes("Mengirim")) {
+            ts.innerText = "Status: ESP32 Terputus / Offline";
             ts.style.color = "#EF4444";
         }
     }
@@ -587,6 +1104,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Show loading screen for at least 800ms for dramatic effect
     setTimeout(hideLoading, 900);
+
+    // Start dynamic simulation loop (smooth 100ms updates)
+    setInterval(tickSimulation, 100);
 
     // Start telemetry polling loop
     setInterval(updateTelemetryUI, 1000);

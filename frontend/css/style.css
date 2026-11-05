@@ -1,5 +1,5 @@
 /* ============================================================
-   FalakHub — Premium Dark Dashboard CSS
+   HILTRON — Premium Dark Dashboard CSS
    Base: #0B0F19 | Font: Inter
    ============================================================ */
 
@@ -175,6 +175,8 @@ html, body {
     font-weight: 500;
     letter-spacing: 0.04em;
     color: var(--c-text);
+    white-space: nowrap;
+    text-align: right;
 }
 .hud-value.neon  { color: var(--c-neon); }
 .hud-value.blue  { color: var(--c-blue); }
@@ -186,11 +188,19 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px 0;
+    padding: 6px 0;
     border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 10px;
 }
 .data-row:last-child { border-bottom: none; }
-.data-row .label { font-size: 11px; color: var(--c-muted); }
+.data-row .label { 
+    font-size: 11px; 
+    color: var(--c-muted); 
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
 
 /* ── Divider ─────────────────────────────────────────────── */
 .divider {
@@ -645,3 +655,32 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(
 .truncate      { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .select-none   { user-select: none; }
 .transition-all { transition: all var(--transition); }
+
+/* ── Live Simulation Controls ────────────────────────────── */
+.time-ctrl-btn {
+    transition: all 0.2s ease;
+}
+.time-ctrl-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+.speed-btn {
+    transition: all 0.2s ease;
+}
+.speed-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+.speed-btn.active {
+    background: rgba(16, 185, 129, 0.25) !important;
+    border-color: rgba(16, 185, 129, 0.6) !important;
+    color: #10B981 !important;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+@keyframes live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+.live-dot-pulse {
+    animation: live-pulse 1.8s infinite ease-in-out;
+}
+
