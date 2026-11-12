@@ -1,6 +1,6 @@
 import { initGlobe }   from './globe.js';
 import { initSkydome }  from './skydome.js';
-import { fetchEphemeris, fetchMabimsMap, fetchGeocode, fetchTelemetry, sendStartTrackingApi, sendLiveTrackingApi, sendStopTrackingApi } from './api.js';
+import { fetchEphemeris, fetchMabimsMap, fetchGeocode, fetchTelemetry } from './api.js';
 import { initMqttBridge, sendMqttCommand, isMqttConnected } from './mqtt-bridge.js';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -44,18 +44,6 @@ let simState = {
     lastTickMs: Date.now(),
     simulatedElapsedSeconds: 0,
     lastAutoSyncTime: Date.now(),
-};
-
-// ── Celestial Live Lock Tracking State ─────────────────────────
-let liveTrackingState = {
-    isActive: false,
-    intervalTimer: null,
-    durationTimer: null,
-    updateIntervalMs: 2500, // Stream interval 2.5 detik
-    startTime: null,
-    packetsSent: 0,
-    lastSentAz: null,
-    lastSentAlt: null,
 };
 
 // ── City Registry (dynamic — unlimited) ───────────────────────
@@ -192,12 +180,7 @@ function setupUI() {
     // Reset ke Waktu Sekarang (Offset 0 & 1x speed)
     $('btn-time-reset')?.addEventListener('click', () => {
         appState.timeOffsetMinutes = 0;
-        const slider = $('time-slider');
-        if (slider) {
-            slider.min = "-720";
-            slider.max = "720";
-            slider.value = "0";
-        }
+        $('time-slider').value = '0';
         updateSliderDisplay();
         simState.speedMultiplier = 1;
         simState.isRunning = true;
@@ -214,17 +197,6 @@ function setupUI() {
             b.style.background = is1x ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)';
         });
         syncData();
-        showToast("Kembali ke Waktu Sekarang (Real-Time)", "success");
-    });
-
-    // Lompat ke Waktu Ghurub (Sunset) Otomatis
-    $('btn-time-ghurub')?.addEventListener('click', () => {
-        jumpToGhurub();
-    });
-
-    // Quick jump juga jika klik pada nilai Terbenam (Sunset) di Data Matahari
-    $('val-sunset')?.addEventListener('click', () => {
-        jumpToGhurub();
     });
 
     // Speed buttons (1x, 10x, 60x)
@@ -450,260 +422,20 @@ function setupUI() {
         backdrop.addEventListener('click', closeDrawers);
     }
 
-    // ── Fungsi Lompat Otomatis ke Waktu Ghurub (Sunset) ─────────
-    async function jumpToGhurub() {
-        if (!appState.sunsetTime) {
-            showToast("Memuat data ephemeris ghurub...", "warning");
-            await syncData();
-        }
-
-        if (!appState.sunsetTime) {
-            showToast("Waktu Ghurub belum tersedia untuk lokasi ini.", "error");
-            return;
-        }
-
-        const city = CITIES[appState.activeCityIdx];
-        setApiState('syncing');
-        setText('api-status-text', 'Sinkronisasi Ghurub…');
-
-        // Request ephemeris NASA JPL DE421 tepat pada detik matahari terbenam (Ghurub)
-        const sunsetIso = appState.sunsetTime.toISOString();
-        const sunsetData = await fetchEphemeris(city.lat, city.lon, appState.date, sunsetIso);
-
-        if (sunsetData) {
-            appState.baseTime      = new Date(sunsetData.time_utc);
-            appState.sunsetTime    = new Date(sunsetData.sunset_utc);
-            appState.baseSunAlt    = sunsetData.sun_alt  ?? -0.83;
-            appState.baseSunAz     = sunsetData.sun_az   ?? (sunsetData.sunset_sun_az ?? 262.75);
-            appState.baseSunRa     = sunsetData.sun_ra   ?? 0;
-            appState.baseSunDec    = sunsetData.sun_dec  ?? 0;
-            appState.baseMoonAlt   = sunsetData.moon_alt ?? (sunsetData.sunset_moon_alt ?? 6.17);
-            appState.baseMoonAz    = sunsetData.moon_az  ?? (sunsetData.sunset_moon_az ?? 255.9);
-            appState.baseMoonRa    = sunsetData.moon_ra  ?? 0;
-            appState.baseMoonDec   = sunsetData.moon_dec ?? 0;
-            appState.baseArcl      = sunsetData.arcl     ?? 10.37;
-            appState.baseArcv      = sunsetData.arcv     ?? 6.17;
-            appState.baseGMST      = sunsetData.gmst_hours ?? 0;
-            appState.status        = sunsetData.mabims_status ?? 'Imkanur Rukyat (MABIMS)';
-            appState.illumination  = sunsetData.illumination  ?? 0.0072;
-            setApiState('ok');
-            setText('api-status-text', 'Ghurub Terkunci');
-        }
-
-        // Kunci simulasi pada titik Ghurub
-        appState.timeOffsetMinutes = 0;
-        simState.simulatedElapsedSeconds = 0;
-        simState.lastTickMs = Date.now();
-        simState.isRunning = false;
-
-        const icon = $('icon-time-play');
-        const text = $('text-time-play');
-        if (icon) { icon.className = 'fas fa-play'; icon.style.color = '#F59E0B'; }
-        if (text) text.textContent = 'Jeda';
-
-        const slider = $('time-slider');
-        if (slider) {
-            slider.min = "-720";
-            slider.max = "720";
-            slider.value = "0";
-        }
-
-        updateSliderDisplay();
-        updateUI();
-
-        const pad = (n) => String(n).padStart(2, '0');
-        const sH = pad(appState.sunsetTime.getHours());
-        const sM = pad(appState.sunsetTime.getMinutes());
-        const sS = pad(appState.sunsetTime.getSeconds());
-        showToast(`Waktu simulasi dikunci tepat pada Ghurub (${sH}:${sM}:${sS} WIB)`, "success");
-    }
-
-    // ── Helper: Ambil Posisi Bulan Aktif (Ephemeris Interpolated) ──
-    function getActiveMoonPosition() {
-        const offsetH = (simState.simulatedElapsedSeconds / 3600) + (appState.timeOffsetMinutes / 60);
-        const mAlt = appState.baseMoonAlt - offsetH * 14.2;
-        let mAz  = (appState.baseMoonAz  + offsetH * 1.2) % 360;
-        if (mAz < 0) mAz += 360;
-
-        return {
-            azimuth: parseFloat(mAz.toFixed(2)),
-            altitude: parseFloat(mAlt.toFixed(2)),
-            isBelowHorizon: mAlt < 0
-        };
-    }
-
-    // ── Fungsi Mulai Live Lock Tracking ─────────────────────────
-    async function startLiveTracking() {
-        if (liveTrackingState.isActive) return;
-
-        const pos = getActiveMoonPosition();
-        const btn = $('btn-toggle-tracking');
-        const badge = $('tracking-mode-badge');
-        const infoBox = $('tracking-info-box');
-        const trackerStatus = $('tracker-status');
-        const liveCoords = $('tracking-live-coords');
-        const durationEl = $('tracking-duration');
-
-        liveTrackingState.isActive = true;
-        liveTrackingState.startTime = Date.now();
-        liveTrackingState.packetsSent = 1;
-        liveTrackingState.lastSentAz = pos.azimuth;
-        liveTrackingState.lastSentAlt = pos.altitude;
-
-        // Update Tampilan Tombol & Badge
-        if (btn) {
-            btn.innerHTML = `<i class="fas fa-lock"></i> <span>KUNCI AKTIF: Hentikan Tracking</span>`;
-            btn.style.background = 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)';
-            btn.style.borderColor = 'rgba(239, 68, 68, 0.6)';
-            btn.style.boxShadow = '0 4px 14px rgba(220, 38, 38, 0.4)';
-        }
-        if (badge) {
-            badge.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:#10B981;display:inline-block;box-shadow:0 0 6px #10B981;margin-right:4px;"></span>LIVE LOCK`;
-            badge.style.background = 'rgba(16,185,129,0.2)';
-            badge.style.color = '#10B981';
-            badge.style.borderColor = 'rgba(16,185,129,0.4)';
-        }
-        if (infoBox) infoBox.style.display = 'block';
-        if (liveCoords) liveCoords.textContent = `Az: ${pos.azimuth}° | Alt: ${pos.altitude}°`;
-
-        const targetPayload = {
-            command: 'START_TRACKING',
-            target_azimuth: pos.azimuth,
-            target_altitude: pos.altitude,
-            tracking: true
-        };
-
-        // 1. Kirim instruksi awal START_TRACKING via MQTT atau REST API
-        let sentViaMqtt = false;
-        if (isMqttConnected()) {
-            sentViaMqtt = sendMqttCommand(targetPayload);
-        }
-        if (!sentViaMqtt) {
-            await sendStartTrackingApi(targetPayload);
-        }
-
-        if (trackerStatus) {
-            trackerStatus.innerText = `Status: Live Lock Aktif! Melacak pergerakan hilal secara kontinu...\n(Target awal: Azimuth ${pos.azimuth}°, Altitude ${pos.altitude}°)`;
-            trackerStatus.style.color = "#10B981";
-        }
-        showToast(`Live Lock Tracking Hilal Aktif! (Az: ${pos.azimuth}°, Alt: ${pos.altitude}°)`, "success");
-
-        // 2. Timer Stopwatch Durasi Tracking
-        liveTrackingState.durationTimer = setInterval(() => {
-            if (!liveTrackingState.startTime || !durationEl) return;
-            const elapsedSec = Math.floor((Date.now() - liveTrackingState.startTime) / 1000);
-            const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
-            const secs = String(elapsedSec % 60).padStart(2, '0');
-            durationEl.textContent = `${mins}:${secs}`;
-        }, 1000);
-
-        // 3. Loop Stream Koordinat Real-Time (Setiap 2.5 Detik)
-        liveTrackingState.intervalTimer = setInterval(async () => {
-            if (!liveTrackingState.isActive) return;
-
-            const curPos = getActiveMoonPosition();
-            liveTrackingState.packetsSent++;
-            liveTrackingState.lastSentAz = curPos.azimuth;
-            liveTrackingState.lastSentAlt = curPos.altitude;
-
-            if (liveCoords) {
-                liveCoords.textContent = `Az: ${curPos.azimuth}° | Alt: ${curPos.altitude}°`;
-            }
-
-            const streamPayload = {
-                command: 'LIVE_TRACKING',
-                target_azimuth: curPos.azimuth,
-                target_altitude: curPos.altitude,
-                tracking: true
-            };
-
-            if (isMqttConnected()) {
-                sendMqttCommand(streamPayload);
-            } else {
-                await sendLiveTrackingApi(streamPayload);
-            }
-
-            if (trackerStatus) {
-                trackerStatus.innerText = `Status: Live Lock Mengunci Hilal (#${liveTrackingState.packetsSent} paket stream)\nTarget: Az ${curPos.azimuth}°, Alt ${curPos.altitude}°`;
-                trackerStatus.style.color = "#10B981";
-            }
-        }, liveTrackingState.updateIntervalMs);
-    }
-
-    // ── Fungsi Hentikan Live Lock Tracking ──────────────────────
-    async function stopLiveTracking(manual = true) {
-        if (!liveTrackingState.isActive) return;
-
-        liveTrackingState.isActive = false;
-        if (liveTrackingState.intervalTimer) {
-            clearInterval(liveTrackingState.intervalTimer);
-            liveTrackingState.intervalTimer = null;
-        }
-        if (liveTrackingState.durationTimer) {
-            clearInterval(liveTrackingState.durationTimer);
-            liveTrackingState.durationTimer = null;
-        }
-
-        const btn = $('btn-toggle-tracking');
-        const badge = $('tracking-mode-badge');
-        const infoBox = $('tracking-info-box');
-        const trackerStatus = $('tracker-status');
-
-        if (btn) {
-            btn.innerHTML = `<i class="fas fa-satellite"></i> <span>Mulai Live Lock Tracking</span>`;
-            btn.style.background = 'linear-gradient(135deg, #2563EB 0%, #4F46E5 100%)';
-            btn.style.borderColor = 'rgba(99,102,241,0.5)';
-            btn.style.boxShadow = '0 4px 14px rgba(79,70,229,0.3)';
-        }
-        if (badge) {
-            badge.innerHTML = `STANDBY`;
-            badge.style.background = 'rgba(255,255,255,0.06)';
-            badge.style.color = 'rgba(226,232,240,0.5)';
-            badge.style.borderColor = 'var(--c-border)';
-        }
-        if (infoBox) infoBox.style.display = 'none';
-
-        // Kirim instruksi STOP_TRACKING
-        const stopPayload = { command: 'STOP_TRACKING' };
-        if (isMqttConnected()) {
-            sendMqttCommand(stopPayload);
-        } else {
-            await sendStopTrackingApi();
-        }
-
-        if (trackerStatus) {
-            trackerStatus.innerText = `Status: Live Lock Dihentikan. Motor mengunci di koordinat terakhir.`;
-            trackerStatus.style.color = "#F59E0B";
-        }
-
-        if (manual) {
-            showToast("Live Lock Tracking Dihentikan. Posisi Terkunci.", "warning");
-        }
-    }
-
-    // ── Event Listener: Tombol Toggle Live Lock Tracking ────────
-    $('btn-toggle-tracking')?.addEventListener('click', async () => {
-        if (liveTrackingState.isActive) {
-            await stopLiveTracking(true);
-        } else {
-            await startLiveTracking();
-        }
-    });
-
-    // Tracker Button Logic: Arahkan Sekali (Go-To)
+    // Tracker Button Logic
     $('btn-point')?.addEventListener('click', async () => {
-        // Jika sedang live tracking aktif, hentikan dulu agar tidak bentrok
-        if (liveTrackingState.isActive) {
-            await stopLiveTracking(false);
-        }
-
         const trackerStatus = $('tracker-status');
         if (!trackerStatus) return;
 
-        const pos = getActiveMoonPosition();
+        // Gunakan posisi Bulan/Hilal aktif sesuai simulasi dinamis
+        const offsetH   = (simState.simulatedElapsedSeconds / 3600) + (appState.timeOffsetMinutes / 60);
+        const mAlt = appState.baseMoonAlt - offsetH * 14.5;
+        let mAz  = (appState.baseMoonAz  + offsetH * 14.5) % 360;
+        if (mAz < 0) mAz += 360;
+
         const targetData = {
-            target_azimuth: pos.azimuth,
-            target_altitude: pos.altitude
+            target_azimuth: parseFloat(mAz.toFixed(2)),
+            target_altitude: parseFloat(mAlt.toFixed(2))
         };
 
         const altNote = targetData.target_altitude < 0 
@@ -730,6 +462,7 @@ function setupUI() {
 
         // 2. Fallback via Local REST API jika MQTT belum terhubung
         try {
+            // Kita gunakan API_BASE yang sama dengan ephemeris
             const { API_BASE } = await import('./api.js');
             const response = await fetch(`${API_BASE}/point-hilal`, {
                 method: 'POST',
@@ -1128,15 +861,17 @@ async function syncData(options = { quiet: false }) {
 
     let ts;
     if (appState.date === todayUtc || appState.date === todayLocal) {
-        // Mode waktu nyata: gunakan jam saat ini persis sebagai basis nominal
-        ts = localNow.toISOString();
+        // Mode waktu nyata: gunakan jam saat ini persis (+ offset slider jika ada)
+        const targetDate = new Date(Date.now() + (appState.timeOffsetMinutes * 60000));
+        ts = targetDate.toISOString();
     } else {
-        // Tanggal lain: terapkan jam, menit, detik saat ini pada tanggal tersebut
+        // Tanggal lain: terapkan jam, menit, detik saat ini pada tanggal tersebut (+ offset slider)
         const h = String(localNow.getUTCHours()).padStart(2, '0');
         const m = String(localNow.getUTCMinutes()).padStart(2, '0');
         const s = String(localNow.getUTCSeconds()).padStart(2, '0');
         const baseIso = `${appState.date}T${h}:${m}:${s}Z`;
-        ts = new Date(baseIso).toISOString();
+        const targetDate = new Date(new Date(baseIso).getTime() + (appState.timeOffsetMinutes * 60000));
+        ts = targetDate.toISOString();
     }
 
     const data = await fetchEphemeris(city.lat, city.lon, appState.date, ts);
@@ -1240,13 +975,6 @@ function updateUI() {
         const sH = pad(appState.sunsetTime.getHours());
         const sM = pad(appState.sunsetTime.getMinutes());
         setText('val-sunset', `${sH}:${sM} ${tzAbbr}`);
-        setText('badge-ghurub-time', `${sH}:${sM}`);
-
-        const btnGhurub = $('btn-time-ghurub');
-        if (btnGhurub) {
-            const isNearGhurub = Math.abs(activeTime.getTime() - appState.sunsetTime.getTime()) < 60000;
-            btnGhurub.classList.toggle('active', isNearGhurub);
-        }
     }
 
     // Interpolated values for celestial bodies
@@ -1401,18 +1129,6 @@ export function renderTelemetryData(data) {
         const badge = $('gps-lock-badge');
         const btnGps = $('btn-apply-gps');
 
-        // Update Tracking Status Badge dari telemetri hardware jika tidak sedang dikontrol aktif oleh browser ini
-        const trackingBadge = $('tracking-mode-badge');
-        if (trackingBadge && !liveTrackingState.isActive) {
-            const hwTracking = (data.is_tracking === true || String(data.is_tracking).toLowerCase() === "true");
-            if (hwTracking) {
-                trackingBadge.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:#10B981;display:inline-block;box-shadow:0 0 6px #10B981;margin-right:4px;"></span>LIVE LOCK`;
-                trackingBadge.style.background = 'rgba(16,185,129,0.2)';
-                trackingBadge.style.color = '#10B981';
-                trackingBadge.style.borderColor = 'rgba(16,185,129,0.4)';
-            }
-        }
-
         if (data.gps_valid) {
             latestGpsData = { lat: data.gps_lat, lon: data.gps_lon };
             setText('gps-lat', `${data.gps_lat.toFixed(5)}°`);
@@ -1475,36 +1191,23 @@ function hideLoading() {
 document.addEventListener('DOMContentLoaded', async () => {
     setupUI();
 
-    try {
-        globe = initGlobe(
-            $('webgl-container'),
-            CITIES,
-            (idx) => selectCity(idx)
-        );
-    } catch (err) {
-        console.warn('3D Globe initialization skipped:', err);
-        globe = null;
-    }
+    globe   = initGlobe(
+        $('webgl-container'),
+        CITIES,
+        (idx) => selectCity(idx)
+    );
 
-    try {
-        skydome = initSkydome(
-            $('skydome-canvas-container'),
-            $('skydome-labels-container')
-        );
-    } catch (err) {
-        console.warn('3D Skydome initialization skipped:', err);
-        skydome = null;
-    }
-
-    // Pastikan loading screen selalu tertutup meski API cold-start atau WebGL tidak tersedia (ramah crawler & mobile)
-    const loadingFallbackTimer = setTimeout(hideLoading, 1200);
+    skydome = initSkydome(
+        $('skydome-canvas-container'),
+        $('skydome-labels-container')
+    );
 
     // Initial data load
     await selectCity(0);
     fetchMap();
 
-    clearTimeout(loadingFallbackTimer);
-    setTimeout(hideLoading, 300);
+    // Show loading screen for at least 800ms for dramatic effect
+    setTimeout(hideLoading, 900);
 
     // Start dynamic simulation loop (smooth 100ms updates)
     setInterval(tickSimulation, 100);
