@@ -9,13 +9,21 @@ from pydantic import BaseModel
 from datetime import datetime, timezone
 import uvicorn
 import json
-from typing import List
+from typing import List, Optional
 from geopy.geocoders import Nominatim
 
 from astronomy.engine import FalakCalculator
 from ai.predictive_cache import PredictiveCache
 
-app = FastAPI(title="HILTRON API", version="1.1.0")
+app = FastAPI(title="HILTRON API", version="1.2.0")
+
+# Cegah mesin pencari mengindeks endpoint API mentah (/api/*)
+@app.middleware("http")
+async def add_robots_header_for_api(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/api/"):
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
 
 # CORS untuk mengizinkan akses dari Vercel/Frontend
 app.add_middleware(
@@ -60,6 +68,12 @@ class EphemerisResponse(BaseModel):
     mabims_status: str
     is_visible: bool
     hijri: HijriDate
+    arcl_geocentric: Optional[float] = None
+    arcl_topocentric: Optional[float] = None
+    sunset_sun_az: Optional[float] = None
+    sunset_sun_alt: Optional[float] = None
+    sunset_moon_az: Optional[float] = None
+    sunset_moon_alt: Optional[float] = None
 
 @app.get("/api/ephemeris", response_model=EphemerisResponse)
 def get_ephemeris(lat: float, lon: float, date: str, timestamp: str = None):
@@ -132,12 +146,16 @@ class ConnectionManager:
         print("Perangkat terhubung ke WebSocket.")
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
         print("Perangkat terputus dari WebSocket.")
 
     async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
+        for connection in list(self.active_connections):
+            try:
+                await connection.send_text(message)
+            except Exception as e:
+                print(f"Error broadcasting to connection: {e}")
 
 manager = ConnectionManager()
 
@@ -154,6 +172,7 @@ esp32_telemetry = {
     "gps_lat": 0.0,
     "gps_lon": 0.0,
     "gps_sats": 0,
+    "is_tracking": False,
     "last_update": None
 }
 
@@ -164,6 +183,11 @@ def get_telemetry():
 class TargetCoordinates(BaseModel):
     target_azimuth: float
     target_altitude: float
+
+class LiveTrackingCoordinates(BaseModel):
+    target_azimuth: float
+    target_altitude: float
+    tracking: bool = True
 
 @app.websocket("/ws/esp32")
 async def websocket_esp32(websocket: WebSocket):
@@ -177,6 +201,10 @@ async def websocket_esp32(websocket: WebSocket):
             try:
                 parsed = json.loads(data)
                 if parsed.get("type") == "telemetry":
+                    is_tr = parsed.get("is_tracking", False)
+                    if isinstance(is_tr, str):
+                        is_tr = (is_tr.lower() == "true")
+
                     esp32_telemetry.update({
                         "status": "connected",
                         "azimuth": parsed.get("azimuth", 0.0),
@@ -190,6 +218,7 @@ async def websocket_esp32(websocket: WebSocket):
                         "gps_lat": parsed.get("gps_lat", 0.0),
                         "gps_lon": parsed.get("gps_lon", 0.0),
                         "gps_sats": parsed.get("gps_sats", 0),
+                        "is_tracking": bool(is_tr),
                         "last_update": datetime.now().isoformat()
                     })
                 elif parsed.get("type") == "event":
@@ -198,6 +227,10 @@ async def websocket_esp32(websocket: WebSocket):
                         esp32_telemetry["cal_locked"] = True
                     elif event_status == "CALIBRATION_CLEARED":
                         esp32_telemetry["cal_locked"] = False
+                    elif event_status == "TRACKING_STARTED":
+                        esp32_telemetry["is_tracking"] = True
+                    elif event_status == "TRACKING_STOPPED":
+                        esp32_telemetry["is_tracking"] = False
                 elif parsed.get("status") == "ESP32_READY":
                     esp32_telemetry["status"] = "connected"
             except:
@@ -205,6 +238,7 @@ async def websocket_esp32(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         esp32_telemetry["status"] = "disconnected"
+        esp32_telemetry["is_tracking"] = False
 
 @app.post("/api/point-hilal")
 async def point_hilal(target: TargetCoordinates):
@@ -213,7 +247,6 @@ async def point_hilal(target: TargetCoordinates):
         "target_azimuth": target.target_azimuth,
         "target_altitude": target.target_altitude
     }
-    # Ubah dictionary python menjadi JSON string dan kirim ke ESP32
     if len(manager.active_connections) == 0:
         return {
             "status": "warning",
@@ -222,6 +255,54 @@ async def point_hilal(target: TargetCoordinates):
         }
     await manager.broadcast(json.dumps(payload))
     return {"status": "success", "message": "Command POINT_HILAL berhasil dikirim ke ESP32", "payload": payload}
+
+@app.post("/api/start-tracking")
+async def start_tracking(target: LiveTrackingCoordinates):
+    payload = {
+        "command": "START_TRACKING",
+        "target_azimuth": target.target_azimuth,
+        "target_altitude": target.target_altitude,
+        "tracking": True
+    }
+    esp32_telemetry["is_tracking"] = True
+    if len(manager.active_connections) == 0:
+        return {
+            "status": "warning",
+            "message": "ESP32 belum terhubung ke Server! Pastikan ESP32 sudah online.",
+            "payload": payload
+        }
+    await manager.broadcast(json.dumps(payload))
+    return {"status": "success", "message": "Command START_TRACKING berhasil dikirim ke ESP32", "payload": payload}
+
+@app.post("/api/live-tracking")
+async def live_tracking(target: LiveTrackingCoordinates):
+    payload = {
+        "command": "LIVE_TRACKING",
+        "target_azimuth": target.target_azimuth,
+        "target_altitude": target.target_altitude,
+        "tracking": target.tracking
+    }
+    if len(manager.active_connections) == 0:
+        return {
+            "status": "warning",
+            "message": "ESP32 belum terhubung ke Server!",
+            "payload": payload
+        }
+    await manager.broadcast(json.dumps(payload))
+    return {"status": "success", "message": "Command LIVE_TRACKING berhasil dikirim ke ESP32", "payload": payload}
+
+@app.api_route("/api/stop-tracking", methods=["GET", "POST"])
+async def stop_tracking():
+    payload = {"command": "STOP_TRACKING"}
+    esp32_telemetry["is_tracking"] = False
+    if len(manager.active_connections) == 0:
+        return {
+            "status": "warning",
+            "message": "ESP32 belum terhubung ke Server!",
+            "payload": payload
+        }
+    await manager.broadcast(json.dumps(payload))
+    return {"status": "success", "message": "Command STOP_TRACKING berhasil dikirim ke ESP32", "payload": payload}
 
 @app.api_route("/api/set-home", methods=["GET", "POST"])
 async def set_home():

@@ -4,9 +4,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HILTRON — Islamic Astronomical Observatory · OASE III 2026</title>
+    <title>HILTRON — Islamic Astronomical Observatory UIN Malang | Website Astronomi & Pelacak Hilal</title>
     <meta name="description"
-        content="HILTRON: Real-time 3D Islamic Astronomy Dashboard. Ephemeris, MABIMS Hilal Visibility, and Celestial Mechanics powered by NASA JPL DE421.">
+        content="HILTRON adalah website astronomi dan Islamic Observatory UIN Malang (OASE III 2026) berbasis ephemeris NASA JPL DE421, visualisasi 3D interaktif, kriteria visibilitas hilal MABIMS 2021, dan pelacak teleskop otomatis ESP32.">
+    <meta name="keywords"
+        content="HILTRON, Hiltron, hiltron, website astronomi UIN Malang, Islamic Observatory UIN Malang, observatorium astronomi Islam, hisab rukyat, MABIMS 2021, pelacak hilal, ephemeris NASA JPL DE421, UIN Maulana Malik Ibrahim Malang">
+    <meta name="author" content="HILTRON — Islamic Observatory UIN Malang">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="theme-color" content="#0B0F19">
+    <link rel="canonical" href="https://hiltron.vercel.app/">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+    <!-- Google Search Console Verification: tempelkan kode verifikasi Anda di bawah ini -->
+    <!-- <meta name="google-site-verification" content="MASUKKAN_KODE_VERIFIKASI_GOOGLE_DI_SINI"> -->
+
+    <!-- Open Graph / Social Meta -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="id_ID">
+    <meta property="og:site_name" content="HILTRON — Islamic Observatory UIN Malang">
+    <meta property="og:title" content="HILTRON — Islamic Astronomical Observatory UIN Malang">
+    <meta property="og:description"
+        content="Website astronomi dan Islamic Observatory UIN Malang (OASE III 2026) berbasis ephemeris NASA JPL DE421, kriteria visibilitas hilal MABIMS 2021, visualisasi 3D, dan pelacak teleskop ESP32.">
+    <meta property="og:url" content="https://hiltron.vercel.app/">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="HILTRON — Islamic Astronomical Observatory UIN Malang">
+    <meta name="twitter:description"
+        content="Website astronomi dan Islamic Observatory UIN Malang (OASE III 2026) berbasis ephemeris NASA JPL DE421, kriteria hilal MABIMS 2021, dan pelacak teleskop ESP32.">
+
+    <!-- Structured Data (Schema.org JSON-LD) -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "WebSite",
+                    "@id": "https://hiltron.vercel.app/#website",
+                    "name": "HILTRON",
+                    "alternateName": [
+                        "Hiltron",
+                        "HILTRON Islamic Observatory UIN Malang",
+                        "Website Astronomi UIN Malang"
+                    ],
+                    "url": "https://hiltron.vercel.app/",
+                    "inLanguage": "id"
+                },
+                {
+                    "@type": "WebApplication",
+                    "@id": "https://hiltron.vercel.app/#app",
+                    "name": "HILTRON — Islamic Astronomical Observatory UIN Malang",
+                    "url": "https://hiltron.vercel.app/",
+                    "applicationCategory": "EducationalApplication",
+                    "operatingSystem": "Web",
+                    "inLanguage": "id",
+                    "description": "Platform website astronomi dan Islamic Observatory UIN Malang (OASE III 2026) untuk perhitungan hisab ephemeris NASA JPL DE421, evaluasi kriteria hilal MABIMS 2021, simulasi horizon 3D, dan pelacak teleskop hilal otomatis ESP32.",
+                    "creator": {
+                        "@type": "Organization",
+                        "name": "Tim HILTRON — UIN Maulana Malik Ibrahim Malang (OASE III 2026)"
+                    }
+                }
+            ]
+        }
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +83,7 @@
     <script src="js/tailwind-config.js"></script>
 
     <!-- App Styles -->
-    <link rel="stylesheet" href="css/style.css?v=3">
+    <link rel="stylesheet" href="css/style.css?v=4">
 
     <!-- MQTT.js CDN for EMQX Public Broker (IoT Cloud Bridge) -->
     <script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
@@ -83,10 +143,10 @@
                     </svg>
                 </div>
                 <div>
-                    <div style="font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#E2E8F0;">HILTRON</div>
+                    <h1 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#E2E8F0;line-height:1.2;">HILTRON</h1>
                     <div
                         style="font-size:10px;letter-spacing:0.12em;color:rgba(226,232,240,0.4);font-weight:500;text-transform:uppercase;">
-                        Islamic Observatory · OASE III 2026</div>
+                        Islamic Observatory UIN Malang · OASE III 2026</div>
                 </div>
             </div>
 
@@ -197,6 +257,16 @@
                         <!-- Live Simulation Toolbar -->
                         <div
                             style="display:flex;flex-direction:column;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
+                            <!-- Tombol Ghurub Otomatis (Lompat ke Waktu Sunset) -->
+                            <button id="btn-time-ghurub" class="time-ctrl-btn"
+                                title="Lompat Otomatis ke Waktu Ghurub (Terbenam Matahari) untuk Rukyatul Hilal"
+                                style="width:100%;background:linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(234,88,12,0.22) 100%);border:1px solid rgba(245,158,11,0.4);color:#FDE68A;border-radius:6px;padding:7px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all 0.2s;box-shadow:0 2px 8px rgba(245,158,11,0.15);">
+                                <i class="fas fa-mountain-sun" style="font-size:12px;color:#F59E0B;"></i>
+                                <span>Ghurub Otomatis</span>
+                                <span id="badge-ghurub-time"
+                                    style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.4);color:#FCD34D;font-family:'JetBrains Mono',monospace;margin-left:2px;border:1px solid rgba(245,158,11,0.25);">--:--</span>
+                            </button>
+
                             <!-- Action buttons row: Live / Jeda & Reset Sekarang -->
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
                                 <button id="btn-time-play" class="time-ctrl-btn" title="Jeda / Putar Waktu Simulasi"
@@ -209,7 +279,7 @@
                                 <button id="btn-time-reset" class="time-ctrl-btn"
                                     title="Kembali ke Waktu Sekarang (Offset 0)"
                                     style="background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:#E2E8F0;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-                                    <i class="fas fa-undo-alt" style="font-size:10px;color:#F59E0B;"></i>
+                                    <i class="fas fa-undo-alt" style="font-size:10px;color:#38BDF8;"></i>
                                     <span style="font-size:11px;font-weight:500;">Sekarang</span>
                                 </button>
                             </div>
@@ -263,7 +333,7 @@
                         </div>
                         <div class="data-row">
                             <span class="label">Terbenam (Sunset)</span>
-                            <span class="hud-value" id="val-sunset">--:--</span>
+                            <span class="hud-value gold" id="val-sunset" style="cursor:pointer;" title="Klik untuk lompat ke Waktu Ghurub">--:--</span>
                         </div>
                         <div class="data-row">
                             <span class="label">Azimuth Matahari</span>
@@ -395,21 +465,55 @@
 
             <!-- Telescope Control -->
             <div class="glass-panel" style="padding:16px;border-radius:16px;">
-                <div class="section-label mb-3">Kontrol Hardware (ESP32)</div>
-                <button id="btn-point"
-                    style="width:100%;padding:12px;background:#10B981;color:white;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;transition:background 0.3s;border:none;"
-                    onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
-                    <i class="fas fa-satellite-dish" style="margin-right:6px;"></i> Arahkan Teleskop
+                <div style="display:flex;justify-content:space-between;align-items:center;" class="mb-3">
+                    <div class="section-label" style="margin-bottom:0;"><i class="fas fa-satellite-dish" style="color:#10B981;margin-right:6px;"></i>Pelacak Hilal (ESP32)</div>
+                    <span id="tracking-mode-badge"
+                        style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,0.06);color:rgba(226,232,240,0.5);border:1px solid var(--c-border);letter-spacing:0.04em;transition:all 0.3s;">
+                        STANDBY
+                    </span>
+                </div>
+
+                <!-- Tombol Utama: Live Lock Tracking -->
+                <button id="btn-toggle-tracking"
+                    style="width:100%;padding:11px 14px;background:linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);color:white;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;transition:all 0.3s;border:1px solid rgba(99,102,241,0.5);box-shadow:0 4px 14px rgba(79,70,229,0.3);display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <i class="fas fa-satellite"></i> <span>Mulai Live Lock Tracking</span>
                 </button>
-                <button id="btn-set-home"
-                    style="width:100%;margin-top:8px;padding:9px;background:rgba(255,255,255,0.05);color:#CBD5E1;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;transition:all 0.3s;border:1px solid var(--c-border);"
-                    onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.05)'">
-                    <i class="fas fa-crosshairs" style="margin-right:6px;"></i> Kalibrasi Titik Nol (0° Ufuk & Hadap
-                    Utara)
-                </button>
+
+                <!-- Panel Telemetri Live Tracking Aktif -->
+                <div id="tracking-info-box" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);font-size:11px;line-height:1.5;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                        <span style="font-weight:700;color:#60A5FA;display:flex;align-items:center;gap:6px;">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#10B981;box-shadow:0 0 8px #10B981;display:inline-block;"></span>
+                            CELESTIAL LOCK AKTIF
+                        </span>
+                        <span id="tracking-duration" style="font-family:'JetBrains Mono',monospace;color:#93C5FD;font-size:10px;">00:00</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(226,232,240,0.7);margin-bottom:2px;">
+                        <span>Target Stream:</span>
+                        <span id="tracking-live-coords" style="font-family:'JetBrains Mono',monospace;color:#38BDF8;font-weight:600;">Az: --° | Alt: --°</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(226,232,240,0.5);">
+                        <span>Laju Gerak:</span>
+                        <span style="font-family:'JetBrains Mono',monospace;color:#E2E8F0;">~14.5°/j (Dual-Axis)</span>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi Tambahan: Go-To & Set Home -->
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button id="btn-point"
+                        style="flex:1;padding:9px;background:rgba(16,185,129,0.15);color:#10B981;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;transition:all 0.3s;border:1px solid rgba(16,185,129,0.3);white-space:nowrap;"
+                        onmouseover="this.style.background='rgba(16,185,129,0.25)'" onmouseout="this.style.background='rgba(16,185,129,0.15)'">
+                        <i class="fas fa-crosshairs" style="margin-right:4px;"></i> Arahkan Sekali
+                    </button>
+                    <button id="btn-set-home"
+                        style="flex:1;padding:9px;background:rgba(255,255,255,0.05);color:#CBD5E1;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;transition:all 0.3s;border:1px solid var(--c-border);white-space:nowrap;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                        <i class="fas fa-compass" style="margin-right:4px;"></i> Set Home
+                    </button>
+                </div>
+
                 <div id="tracker-status"
-                    style="margin-top:12px;font-size:11px;color:rgba(226,232,240,0.7);text-align:center;">
+                    style="margin-top:10px;font-size:11px;color:rgba(226,232,240,0.7);text-align:center;line-height:1.4;">
                     Status: Menunggu instruksi...
                 </div>
             </div>
@@ -550,23 +654,36 @@
                 </div>
             </div>
 
-            <!-- Credits -->
-            <div
+            <!-- Credits & Observatory Info -->
+            <section aria-label="Tentang HILTRON"
                 style="padding:12px 16px;background:rgba(255,255,255,0.02);border:1px solid var(--c-border);border-radius:12px;">
+                <h2 style="margin:0 0 6px 0;font-size:11px;font-weight:700;color:#E2E8F0;letter-spacing:0.04em;text-transform:uppercase;">
+                    Tentang HILTRON — Islamic Observatory UIN Malang
+                </h2>
+                <p style="margin:0 0 8px 0;font-size:10px;color:var(--c-muted);line-height:1.6;">
+                    HILTRON adalah website astronomi dan Islamic Astronomical Observatory dari UIN Maulana Malik Ibrahim Malang (OASE III 2026) untuk pemantauan hisab &amp; rukyatul hilal real-time berbasis ephemeris NASA JPL DE421, kriteria MABIMS 2021, serta pelacak teleskop otomatis ESP32.
+                </p>
                 <div style="font-size:10px;color:var(--c-muted);line-height:1.7;letter-spacing:0.03em;">
                     Ephemeris: <span style="color:rgba(226,232,240,0.7);">NASA JPL DE421</span><br>
                     Engine: <span style="color:rgba(226,232,240,0.7);">Skyfield 1.x</span><br>
                     Render: <span style="color:rgba(226,232,240,0.7);">Three.js r165</span><br>
                     Kriteria: <span style="color:rgba(226,232,240,0.7);">MABIMS 2021</span>
                 </div>
-            </div>
+            </section>
 
         </aside><!-- end right panel -->
 
     </div><!-- end ui-layer -->
 
-    <!-- Main App Script (Cache buster v7) -->
-    <script type="module" src="js/main.js?v=7"></script>
+    <noscript>
+        <div style="padding:24px;max-width:720px;margin:24px auto;color:#E2E8F0;font-family:sans-serif;">
+            <h1>HILTRON — Islamic Astronomical Observatory UIN Malang</h1>
+            <p>Website astronomi dan observatorium ilmu falak UIN Maulana Malik Ibrahim Malang (OASE III 2026) untuk hisab ephemeris NASA JPL DE421, pemetaan visibilitas hilal kriteria MABIMS 2021, visualisasi 3D, dan pelacak teleskop otomatis ESP32. Aktifkan JavaScript untuk membuka dashboard observatorium 3D interaktif.</p>
+        </div>
+    </noscript>
+
+    <!-- Main App Script (Cache buster v9) -->
+    <script type="module" src="js/main.js?v=9"></script>
 </body>
 
 </html>
