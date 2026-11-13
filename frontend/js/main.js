@@ -1,6 +1,6 @@
 import { initGlobe }   from './globe.js';
 import { initSkydome }  from './skydome.js';
-import { fetchEphemeris, fetchMabimsMap, fetchGeocode, fetchTelemetry, sendStartTrackingApi, sendLiveTrackingApi, sendStopTrackingApi } from './api.js';
+import { fetchEphemeris, fetchMabimsMap, fetchGeocode, fetchTelemetry, fetchSystemInfo, fetchDeviceLocationFallback, sendStartTrackingApi, sendLiveTrackingApi, sendStopTrackingApi } from './api.js';
 import { initMqttBridge, sendMqttCommand, isMqttConnected } from './mqtt-bridge.js';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -132,6 +132,86 @@ function showToast(message, type = 'success') {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(-50%) translateY(-20px)';
     }, 4500);
+}
+
+// ── Custom Glassmorphism Confirm Modal (Desktop/WebView Safe) ─
+function showConfirmModal(message, confirmLabel = 'Ya, Lanjutkan', cancelLabel = 'Batal') {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            z-index: 100000;
+            background: rgba(5, 9, 18, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        `;
+
+        const card = document.createElement('div');
+        card.style.cssText = `
+            width: 100%;
+            max-width: 380px;
+            background: rgba(17, 24, 39, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+            color: #E2E8F0;
+            font-size: 13px;
+            line-height: 1.55;
+        `;
+
+        const msgEl = document.createElement('div');
+        msgEl.style.marginBottom = '18px';
+        msgEl.textContent = message;
+
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex;justify-content:flex-end;gap:10px;';
+
+        const btnCancel = document.createElement('button');
+        btnCancel.textContent = cancelLabel;
+        btnCancel.style.cssText = `
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            color: #CBD5E1;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        `;
+
+        const btnOk = document.createElement('button');
+        btnOk.textContent = confirmLabel;
+        btnOk.style.cssText = `
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(239,68,68,0.45);
+            background: rgba(239,68,68,0.85);
+            color: #FFFFFF;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        `;
+
+        const cleanup = (result) => {
+            overlay.remove();
+            resolve(result);
+        };
+
+        btnCancel.addEventListener('click', () => cleanup(false));
+        btnOk.addEventListener('click', () => cleanup(true));
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+
+        actions.append(btnCancel, btnOk);
+        card.append(msgEl, actions);
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+    });
 }
 
 // ── UI Setup ──────────────────────────────────────────────────
@@ -284,8 +364,8 @@ function setupUI() {
         setText('api-status-text', 'Mencari…');
 
         let location = await fetchGeocode(query);
-        if (!location) {
-            // Fallback: Nominatim
+        if (!location && navigator.onLine !== false) {
+            // Fallback: Nominatim client-side saat online
             location = await geocodeNominatim(query);
         }
 
@@ -295,9 +375,13 @@ function setupUI() {
             renderCityDropdown();
             await selectCity(CITIES.length - 1);
             $('city-search-input').value = '';
+            if (location.source === 'offline') {
+                showToast(`Lokasi "${location.name}" ditemukan dari database offline.`, 'success');
+            }
         } else {
             setApiState('error');
             setText('api-status-text', 'Lokasi tidak ditemukan');
+            showToast('Lokasi tidak ditemukan. Coba nama kota utama (mis. Surabaya, Aceh, Makkah) saat offline.', 'warning');
             setTimeout(() => setApiState('ok'), 3000);
         }
     });
@@ -305,70 +389,125 @@ function setupUI() {
     // GPS / Current Location
     let myLocationIdx = null;
 
-    async function detectAndApplyDeviceGPS() {
-        if (!navigator.geolocation) {
-            alert('Browser Anda tidak mendukung deteksi lokasi (GPS).');
-            return;
+    async function applyDetectedLocation({ lat, lon, accuracy, badgeText, sourceText, presetName = null }) {
+        setText('gps-lat', `${lat.toFixed(5)}°`);
+        setText('gps-lon', `${lon.toFixed(5)}°`);
+        setText('gps-sats', sourceText || `Akurasi ±${Math.round(accuracy || 0)}m`);
+
+        const badge = $('gps-lock-badge');
+        if (badge) {
+            badge.textContent = badgeText || 'TERKUNCI (LOCKED)';
+            badge.style.background = 'rgba(16,185,129,0.2)';
+            badge.style.color = '#10B981';
+            badge.style.border = '1px solid rgba(16,185,129,0.3)';
         }
 
+        let name = presetName || `Lokasi Perangkat (${lat.toFixed(4)}°, ${lon.toFixed(4)}°)`;
+        if (!presetName) {
+            const rev = await reverseGeocodeNominatim(lat, lon);
+            if (rev) name = rev;
+        }
+
+        if (myLocationIdx !== null && CITIES[myLocationIdx]) {
+            CITIES[myLocationIdx].name = name;
+            CITIES[myLocationIdx].lat  = lat;
+            CITIES[myLocationIdx].lon  = lon;
+        } else {
+            CITIES.push({ name, lat, lon });
+            myLocationIdx = CITIES.length - 1;
+            if (globe) globe.addMarker(lat, lon);
+        }
+
+        renderCityDropdown();
+        await selectCity(myLocationIdx);
+
+        const btnDetectDevice = $('btn-detect-device-gps');
+        if (btnDetectDevice) {
+            btnDetectDevice.innerHTML = `<i class="fas fa-check" style="margin-right:6px;"></i> Lokasi Terkunci!`;
+            btnDetectDevice.style.background = '#10B981';
+            setTimeout(() => {
+                btnDetectDevice.innerHTML = `<i class="fas fa-crosshairs" style="margin-right:6px;"></i> Ambil Lokasi GPS HP / Laptop`;
+            }, 3000);
+        }
+    }
+
+    async function tryBackendDeviceLocationFallback() {
+        const iconGps = $('btn-gps')?.querySelector('i');
+        const btnDetectDevice = $('btn-detect-device-gps');
+
+        setApiState('syncing');
+        setText('api-status-text', 'Mendeteksi via Desktop…');
+
+        const fallback = await fetchDeviceLocationFallback();
+        if (fallback && typeof fallback.lat === 'number' && typeof fallback.lon === 'number') {
+            try {
+                const isIp = fallback.source === 'ip_geolocation';
+                await applyDetectedLocation({
+                    lat: fallback.lat,
+                    lon: fallback.lon,
+                    accuracy: fallback.accuracy_m,
+                    badgeText: isIp ? 'PERKIRAAN IP' : 'TERKUNCI (WINDOWS)',
+                    sourceText: isIp
+                        ? `Jaringan IP (±${Math.round((fallback.accuracy_m || 5000) / 1000)} km)`
+                        : `Windows Location (±${fallback.accuracy_m || 100}m)`,
+                    presetName: fallback.name,
+                });
+                showToast(
+                    isIp
+                        ? `Lokasi terdeteksi via jaringan (${fallback.name || 'IP'}). Klik Bumi jika ingin titik presisi.`
+                        : `Lokasi terdeteksi via Windows Location Services.`,
+                    'success'
+                );
+                if (iconGps) iconGps.className = 'fas fa-crosshairs';
+                return true;
+            } catch (err) {
+                console.error('Error applying backend fallback location:', err);
+            }
+        }
+
+        setApiState('error');
+        setText('api-status-text', 'Akses GPS Gagal/Ditolak');
+        setTimeout(() => setApiState('ok'), 3000);
+        if (iconGps) iconGps.className = 'fas fa-crosshairs';
+        if (btnDetectDevice) {
+            btnDetectDevice.innerHTML = `<i class="fas fa-crosshairs" style="margin-right:6px;"></i> Coba Lagi Ambil Lokasi`;
+            btnDetectDevice.style.background = '#10B981';
+        }
+        showToast('Lokasi perangkat tidak tersedia. Aktifkan Location Services Windows, gunakan GPS ESP32, atau klik lokasi di Bumi 3D.', 'error');
+        return false;
+    }
+
+    async function detectAndApplyDeviceGPS() {
         const iconGps = $('btn-gps')?.querySelector('i');
         const btnDetectDevice = $('btn-detect-device-gps');
 
         if (iconGps) iconGps.className = 'fas fa-spinner fa-spin';
         if (btnDetectDevice) {
-            btnDetectDevice.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i> Mendeteksi Lokasi GPS...`;
-            btnDetectDevice.style.background = "#F59E0B";
+            btnDetectDevice.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i> Mendeteksi Lokasi...`;
+            btnDetectDevice.style.background = '#F59E0B';
         }
 
         setApiState('syncing');
-        setText('api-status-text', 'Mencari Lokasi GPS…');
+        setText('api-status-text', 'Mencari Lokasi…');
+
+        if (!navigator.geolocation) {
+            await tryBackendDeviceLocationFallback();
+            return;
+        }
 
         navigator.geolocation.getCurrentPosition(
             async (pos) => {
                 try {
-                    const lat = pos.coords.latitude;
-                    const lon = pos.coords.longitude;
                     const accuracy = Math.round(pos.coords.accuracy);
-
-                    // Update Tampilan Kartu GPS Hardware/Device Panel
-                    setText('gps-lat', `${lat.toFixed(5)}°`);
-                    setText('gps-lon', `${lon.toFixed(5)}°`);
-                    setText('gps-sats', `Akurasi ±${accuracy}m`);
-
-                    const badge = $('gps-lock-badge');
-                    if (badge) {
-                        badge.textContent = "TERKUNCI (LOCKED)";
-                        badge.style.background = "rgba(16,185,129,0.2)";
-                        badge.style.color = "#10B981";
-                        badge.style.border = "1px solid rgba(16,185,129,0.3)";
-                    }
-
-                    let name = `Lokasi Perangkat (${lat.toFixed(4)}°, ${lon.toFixed(4)}°)`;
-                    const rev = await reverseGeocodeNominatim(lat, lon);
-                    if (rev) name = rev;
-
-                    if (myLocationIdx !== null && CITIES[myLocationIdx]) {
-                        CITIES[myLocationIdx].name = name;
-                        CITIES[myLocationIdx].lat  = lat;
-                        CITIES[myLocationIdx].lon  = lon;
-                    } else {
-                        CITIES.push({ name, lat, lon });
-                        myLocationIdx = CITIES.length - 1;
-                        if (globe) globe.addMarker(lat, lon);
-                    }
-
-                    renderCityDropdown();
-                    await selectCity(myLocationIdx);
-
-                    if (btnDetectDevice) {
-                        btnDetectDevice.innerHTML = `<i class="fas fa-check" style="margin-right:6px;"></i> Lokasi Terkunci!`;
-                        btnDetectDevice.style.background = "#10B981";
-                        setTimeout(() => {
-                            btnDetectDevice.innerHTML = `<i class="fas fa-crosshairs" style="margin-right:6px;"></i> Ambil Lokasi GPS HP / Laptop`;
-                        }, 3000);
-                    }
+                    await applyDetectedLocation({
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        accuracy,
+                        badgeText: 'TERKUNCI (LOCKED)',
+                        sourceText: `Akurasi ±${accuracy}m`,
+                    });
                 } catch (err) {
-                    console.error("Error during GPS selectCity:", err);
+                    console.error('Error during GPS selectCity:', err);
                     setApiState('error');
                     setText('api-status-text', 'Gagal memproses data lokasi');
                     setTimeout(() => setApiState('ok'), 3000);
@@ -376,19 +515,11 @@ function setupUI() {
                     if (iconGps) iconGps.className = 'fas fa-crosshairs';
                 }
             },
-            (err) => {
-                console.warn("Geolocation error:", err);
-                setApiState('error');
-                setText('api-status-text', 'Akses GPS Gagal/Ditolak');
-                setTimeout(() => setApiState('ok'), 3000);
-                if (iconGps) iconGps.className = 'fas fa-crosshairs';
-                if (btnDetectDevice) {
-                    btnDetectDevice.innerHTML = `<i class="fas fa-crosshairs" style="margin-right:6px;"></i> Coba Lagi Ambil Lokasi`;
-                    btnDetectDevice.style.background = "#10B981";
-                }
-                alert("Gagal mengakses GPS. Pastikan izin lokasi diberikan pada browser.");
+            async (err) => {
+                console.warn('Geolocation error, trying backend fallback:', err);
+                await tryBackendDeviceLocationFallback();
             },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
         );
     }
 
@@ -938,7 +1069,11 @@ function setupUI() {
     // ── Reset Calibration in EEPROM / NVS ──
     const btnClearCalib = $('btn-clear-calib');
     btnClearCalib?.addEventListener('click', async () => {
-        if (!confirm("Apakah Anda yakin ingin mereset data kalibrasi BNO055 di EEPROM Flash ESP32?")) return;
+        const confirmed = await showConfirmModal(
+            "Apakah Anda yakin ingin mereset data kalibrasi BNO055 di EEPROM Flash ESP32?",
+            "Ya, Reset Kalibrasi"
+        );
+        if (!confirmed) return;
         
         const calMsg = $('cal-status-msg');
         const calBadge = $('cal-locked-badge');
@@ -1033,9 +1168,10 @@ function setupUI() {
 
 // ── Nominatim Geocoder Fallback ───────────────────────────────
 async function geocodeNominatim(query) {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
         const res = await fetch(url, { headers: { 'Accept-Language': 'id,en' }, signal: controller.signal });
         clearTimeout(timeoutId);
@@ -1051,9 +1187,10 @@ async function geocodeNominatim(query) {
 }
 
 async function reverseGeocodeNominatim(lat, lon) {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
         const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`;
         const res = await fetch(url, { headers: { 'Accept-Language': 'id,en' }, signal: controller.signal });
         clearTimeout(timeoutId);
@@ -1184,8 +1321,8 @@ async function syncData(options = { quiet: false }) {
 
 // ── Fetch MABIMS Map ──────────────────────────────────────────
 async function fetchMap() {
-    const data = await fetchMabimsMap(appState.date);
-    if (data && globe) globe.drawMabimsMap(data);
+    // Overlay grid titik visibilitas MABIMS pada globe dinonaktifkan.
+    return;
 }
 
 // ── Dynamic Real-Time Simulation Engine ───────────────────────
@@ -1467,31 +1604,37 @@ async function updateTelemetryUI() {
 
 // ── Loading Screen Dismissal ──────────────────────────────────
 function hideLoading() {
+    window.__HILTRON_READY__ = true;
     const ls = $('loading-screen');
     if (ls) ls.classList.add('hidden');
 }
 
 // ── Bootstrap ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    setupUI();
+    try {
+        setupUI();
 
-    globe   = initGlobe(
-        $('webgl-container'),
-        CITIES,
-        (idx) => selectCity(idx)
-    );
+        globe = initGlobe(
+            $('webgl-container'),
+            CITIES,
+            (idx) => selectCity(idx)
+        );
 
-    skydome = initSkydome(
-        $('skydome-canvas-container'),
-        $('skydome-labels-container')
-    );
+        skydome = initSkydome(
+            $('skydome-canvas-container'),
+            $('skydome-labels-container')
+        );
 
-    // Initial data load
-    await selectCity(0);
-    fetchMap();
-
-    // Show loading screen for at least 800ms for dramatic effect
-    setTimeout(hideLoading, 900);
+        // Initial data load
+        await selectCity(0);
+        fetchMap();
+    } catch (err) {
+        console.error('[HILTRON] Boot error:', err);
+        showToast('Sebagian komponen gagal dimuat. Memuat ulang data…', 'warning');
+    } finally {
+        // Show loading screen briefly, then always dismiss
+        setTimeout(hideLoading, 700);
+    }
 
     // Start dynamic simulation loop (smooth 100ms updates)
     setInterval(tickSimulation, 100);
@@ -1521,4 +1664,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Start telemetry polling loop (sebagai cadangan saat running di localhost)
     setInterval(updateTelemetryUI, 1000);
+
+    // Tampilkan info WebSocket LAN lokal saat berjalan sebagai aplikasi desktop
+    const sysInfo = await fetchSystemInfo();
+    if (sysInfo && sysInfo.ws_url) {
+        const wsBox = $('desktop-ws-box');
+        const wsUrlEl = $('desktop-ws-url');
+        const copyBtn = $('btn-copy-ws-url');
+        if (wsBox && wsUrlEl) {
+            wsUrlEl.textContent = sysInfo.ws_url;
+            wsBox.style.display = 'block';
+            copyBtn?.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(sysInfo.ws_url);
+                    showToast(`Alamat WebSocket disalin: ${sysInfo.ws_url}`, 'success');
+                } catch {
+                    showToast(sysInfo.ws_url, 'success');
+                }
+            });
+        }
+    }
 });

@@ -29,6 +29,15 @@ export function initMqttBridge(callbacks = {}) {
         return;
     }
 
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        console.info('[MQTT] Mode offline terdeteksi — melewati koneksi EMQX Cloud Broker.');
+        if (onStatusChangeCallback) onStatusChangeCallback(false);
+        window.addEventListener('online', () => {
+            if (!mqttClient) initMqttBridge(callbacks);
+        }, { once: true });
+        return;
+    }
+
     const clientId = 'hiltron_web_' + Math.random().toString(16).substring(2, 10);
     console.log('[MQTT] Menghubungkan ke EMQX Public Broker:', MQTT_CONFIG.brokerUrl, '| ClientId:', clientId);
 
@@ -36,8 +45,8 @@ export function initMqttBridge(callbacks = {}) {
         mqttClient = window.mqtt.connect(MQTT_CONFIG.brokerUrl, {
             clientId: clientId,
             clean: true,
-            connectTimeout: 10000,
-            reconnectPeriod: 3000,
+            connectTimeout: 8000,
+            reconnectPeriod: 10000,
         });
 
         mqttClient.on('connect', () => {

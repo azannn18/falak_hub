@@ -222,7 +222,7 @@ export function initSkydome(container, labelsContainer) {
     // ── Moon Mesh ─────────────────────────────────────────────────
     const moonGeom    = new THREE.SphereGeometry(10, 32, 32);
     const moonTexture = new THREE.TextureLoader().load(
-        'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg',
+        './assets/textures/moon_1024.jpg',
         () => renderer.render(scene, camera)
     );
     const moonMat  = new THREE.MeshStandardMaterial({

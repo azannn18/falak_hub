@@ -4,11 +4,21 @@ import numpy as np
 from datetime import datetime
 from astronomy.engine import FalakCalculator
 
+try:
+    from paths import get_app_data_dir
+except ImportError:
+    from backend.paths import get_app_data_dir
+
 class PredictiveCache:
     def __init__(self, calculator: FalakCalculator):
         self.calc = calculator
         self.cache = {}
         self.logs = []
+        self.disk_cache_dir = get_app_data_dir() / "grid_cache"
+        try:
+            self.disk_cache_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self.disk_cache_dir = None
         
     def train(self, query_logs):
         """Mock training to reduce Vercel serverless size (removed scikit-learn)."""
@@ -23,6 +33,15 @@ class PredictiveCache:
         cache_key = f"{dt.year}-{dt.month}-{dt.day}_res{resolution}"
         if cache_key in self.cache:
             return self.cache[cache_key]
+
+        disk_file = (self.disk_cache_dir / f"{cache_key}.pbf") if self.disk_cache_dir else None
+        if disk_file and disk_file.is_file():
+            try:
+                pbf = disk_file.read_bytes()
+                self.cache[cache_key] = pbf
+                return pbf
+            except OSError:
+                pass
 
         features = []
         # Generate grid
@@ -65,4 +84,9 @@ class PredictiveCache:
         # Serialize to Geobuf for highly optimized over-the-wire transfer
         pbf = geobuf.encode(geojson)
         self.cache[cache_key] = pbf
+        if disk_file:
+            try:
+                disk_file.write_bytes(pbf)
+            except OSError:
+                pass
         return pbf

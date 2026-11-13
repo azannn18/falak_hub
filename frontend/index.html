@@ -1,616 +1,633 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HILTRON — Islamic Astronomical Observatory · OASE III 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HILTRON — Islamic Astronomical Observatory & Autonomous Hilal Tracker</title>
     <meta name="description"
-        content="HILTRON: Real-time 3D Islamic Astronomy Dashboard. Ephemeris, MABIMS Hilal Visibility, and Celestial Mechanics powered by NASA JPL DE421.">
+        content="HILTRON: Sistem Observatorium Astronomi Islam Berbasis Ephemeris NASA JPL DE421, Visualisasi 3D Interaktif, dan Pelacak Hilal Otomatis ESP32 IoT.">
+    <link rel="icon" type="image/x-icon" href="assets/hiltron.ico">
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
+    <!-- Fonts (Offline Bundle) -->
+    <link rel="stylesheet" href="vendor/fonts/fonts.css">
 
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Icons (Offline Font Awesome 6.5.1) -->
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="js/tailwind-config.js"></script>
-
-    <!-- App Styles -->
-    <link rel="stylesheet" href="css/style.css?v=4">
-
-    <!-- MQTT.js CDN for EMQX Public Broker (IoT Cloud Bridge) -->
-    <script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
-
-    <!-- Three.js Import Map (r165 — stable Lensflare JSM) -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three":          "https://unpkg.com/three@0.165.0/build/three.module.js",
-                "three/addons/":  "https://unpkg.com/three@0.165.0/examples/jsm/",
-                "geobuf":         "https://unpkg.com/geobuf@3.0.2/dist/geobuf.js",
-                "pbf":            "https://unpkg.com/pbf@3.2.1/dist/pbf.js"
-            }
-        }
-    </script>
+    <!-- Landing Page Dedicated Styling -->
+    <link rel="stylesheet" href="css/landing.css">
 </head>
 
 <body>
 
-    <!-- Loading Screen -->
-    <div id="loading-screen">
-        <div class="loader-ring"></div>
-        <div style="text-align:center">
-            <div style="font-size:22px;font-weight:700;letter-spacing:0.05em;color:#E2E8F0;margin-bottom:4px;">
-                <span style="color:#10B981;">☽</span> HILTRON
-            </div>
-            <div style="font-size:12px;color:rgba(226,232,240,0.5);letter-spacing:0.1em;">MEMUAT EPHEMERIS NASA JPL…
-            </div>
-        </div>
-    </div>
+    <!-- Cosmic Starfield Canvas & Aurora Gradient -->
+    <div class="cosmic-bg"></div>
+    <canvas id="star-canvas"></canvas>
 
-    <!-- WebGL Canvas (behind everything) -->
-    <div id="webgl-container"></div>
+    <div class="content-wrapper">
 
-    <!-- Globe Hover Tooltip -->
-    <div id="globe-coords-hud">
-        <div id="coords-tooltip">
-            <i class="fas fa-map-marker-alt" style="margin-right:6px;opacity:0.7;"></i>
-            <span id="coords-tooltip-text">0.00°N, 0.00°E</span>
-        </div>
-    </div>
+        <!-- ═══════════════════════════════════════════ NAVBAR ═══ -->
+        <header class="navbar">
+            <div class="container nav-container">
+                <a href="#" class="nav-brand">
+                    <div class="nav-brand-logo">
+                        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"
+                            style="width:32px;height:32px;filter:drop-shadow(0 0 8px rgba(16,185,129,0.7))">
+                            <path d="M28 16.95A12 12 0 1 1 15.05 4 9.33 9.33 0 0 0 28 16.95z" stroke="#10B981"
+                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                            <circle cx="22" cy="8" r="2.2" fill="#F59E0B" />
+                            <circle cx="26" cy="14" r="1.3" fill="#F59E0B" opacity="0.6" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="nav-brand-title">HILTRON <span style="color:#10B981;font-size:0.9rem;">☽</span></div>
+                        <div class="nav-brand-sub">Islamic Astronomical Observatory</div>
+                    </div>
+                </a>
 
-    <!-- Main UI Layer: CSS Grid 3-column -->
-    <div id="ui-layer">
+                <ul class="nav-links">
+                    <li><a href="#features" class="nav-link">Fitur Utama</a></li>
+                    <li><a href="#tracker" class="nav-link">Hardware IoT</a></li>
+                    <li><a href="#platforms" class="nav-link">Platform</a></li>
+                    <li><a href="#download" class="nav-link">Unduh App</a></li>
+                </ul>
 
-        <!-- ═══════════════════════════════════════════ TOP HEADER ═══ -->
-        <header id="app-header" class="glass-panel flex items-center justify-between px-5 py-3 rounded-2xl select-none">
-            <!-- Logo -->
-            <div class="flex items-center gap-3">
-                <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;">
-                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"
-                        style="width:28px;height:28px;filter:drop-shadow(0 0 8px rgba(16,185,129,0.6))">
-                        <path d="M28 16.95A12 12 0 1 1 15.05 4 9.33 9.33 0 0 0 28 16.95z" stroke="#10B981"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        <circle cx="22" cy="8" r="2" fill="#F59E0B" opacity="0.8" />
-                        <circle cx="26" cy="14" r="1.2" fill="#F59E0B" opacity="0.5" />
-                    </svg>
-                </div>
-                <div>
-                    <div style="font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#E2E8F0;">HILTRON</div>
-                    <div
-                        style="font-size:10px;letter-spacing:0.12em;color:rgba(226,232,240,0.4);font-weight:500;text-transform:uppercase;">
-                        Islamic Observatory · OASE III 2026</div>
-                </div>
-            </div>
-
-            <!-- Center: Active Date -->
-            <div class="hidden md:flex flex-col items-center gap-0.5">
-                <div id="ui-active-date" style="font-size:13px;font-weight:600;color:#E2E8F0;letter-spacing:0.01em;">
-                    Memuat tanggal…</div>
-                <div style="font-size:10px;color:rgba(226,232,240,0.4);letter-spacing:0.06em;">KALENDER HIJRIAH · MASEHI
-                </div>
-            </div>
-
-            <!-- Right: Live Coordinates + API Status -->
-            <div class="flex items-center gap-4">
-                <div class="hidden lg:flex flex-col items-end gap-0.5">
-                    <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:rgba(226,232,240,0.7);"
-                        id="header-coords">—</div>
-                    <div style="font-size:10px;color:rgba(226,232,240,0.4);letter-spacing:0.06em;">OBSERVASI AKTIF</div>
-                </div>
-                <div class="api-pill" id="api-pill">
-                    <div class="dot" id="api-status-indicator"></div>
-                    <span style="font-size:11px;font-weight:600;color:#10B981;letter-spacing:0.06em;"
-                        id="api-status-text">Menghubungkan…</span>
+                <div class="nav-actions">
+                    <div class="status-indicator" id="nav-api-pill" title="Status Backend Server">
+                        <span class="status-dot" id="nav-api-dot"></span>
+                        <span id="nav-api-text">Memeriksa API…</span>
+                    </div>
+                    <a href="app.html" class="btn btn-primary btn-sm">
+                        <span>Buka Observatorium</span>
+                        <i class="fas fa-arrow-right" style="font-size:0.75rem;"></i>
+                    </a>
                 </div>
             </div>
         </header>
 
-        <!-- ════════════════════════════════════════════ LEFT PANEL ═══ -->
-        <aside id="left-panel" class="glass-panel rounded-2xl overflow-hidden flex flex-col">
+        <!-- ═══════════════════════════════════════════ HERO SECTION ═══ -->
+        <section class="hero-section">
+            <div class="container">
+                <div class="hero-grid">
+                    
+                    <!-- Left: Text & CTA -->
+                    <div class="hero-text">
+                        <div>
+                            <div class="badge">
+                                <i class="fas fa-certificate"></i>
+                                <span>OASE III 2026 · AI & IoT Innovation in Islamic Astronomy</span>
+                            </div>
+                        </div>
 
-            <!-- Location Selector -->
-            <div style="padding:16px;border-bottom:1px solid var(--c-border);position:relative;">
-                <div class="section-label mb-2">Lokasi Observasi</div>
+                        <h1 class="hero-title">
+                            Observatorium Falak Islam & <span class="gradient-text-emerald">Pelacak Hilal Otonom</span>
+                        </h1>
 
-                <!-- Search Form & GPS -->
-                <div style="display:flex;gap:8px;margin-bottom:10px;">
-                    <form id="search-form" style="position:relative;flex:1;">
-                        <i class="fas fa-search"
-                            style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:rgba(226,232,240,0.35);font-size:12px;"></i>
-                        <input type="text" id="city-search-input" class="search-input"
-                            placeholder="Cari kota di seluruh dunia…" autocomplete="off" style="width:100%;">
-                    </form>
-                    <button id="btn-gps"
-                        style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:#10B981;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-                        onmouseout="this.style.background='rgba(255,255,255,0.05)'" title="Gunakan GPS Lokasi Saat Ini">
-                        <i class="fas fa-crosshairs"></i>
-                    </button>
-                </div>
+                        <p class="hero-description">
+                            Platform astronomi modern yang memadukan komputasi orbit <strong>NASA JPL DE421</strong>, standardisasi keterlihatan hilal <strong>MABIMS 2021</strong>, visualisasi 3D <em>digital twin</em> fotorealistik, dan teleskop cerdas berbasis <strong>ESP32 IoT</strong>.
+                        </p>
 
-                <!-- Active City Button -->
-                <button id="city-dropdown-btn"
-                    style="width:100%;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.05);border:1px solid var(--c-border);border-radius:8px;padding:9px 12px;cursor:pointer;transition:background 0.2s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.09)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.05)'">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-map-marker-alt" style="color:#10B981;font-size:12px;"></i>
-                        <span id="active-city-label"
-                            style="font-size:13px;font-weight:600;color:#E2E8F0;">Memuat…</span>
-                    </div>
-                    <i class="fas fa-chevron-down" id="dropdown-chevron"
-                        style="color:rgba(226,232,240,0.4);font-size:11px;transition:transform 0.25s;"></i>
-                </button>
+                        <div class="hero-cta">
+                            <a href="app.html" class="btn btn-primary btn-lg">
+                                <i class="fas fa-compass"></i>
+                                <span>Masuk ke Observatorium 3D</span>
+                            </a>
+                            <a href="#download" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-download"></i>
+                                <span>Unduh Desktop (.exe)</span>
+                            </a>
+                        </div>
 
-                <!-- Dropdown List -->
-                <div id="city-dropdown"><!-- Populated by JS --></div>
-            </div>
-
-            <!-- Scrollable Content -->
-            <div style="padding:16px;display:flex;flex-direction:column;gap:16px;">
-
-                <!-- Skydome Section -->
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="section-label">Horizon Optis 3D</div>
-                        <div class="flex gap-1.5">
-                            <button id="btn-skydome-reset" class="btn-icon" title="Reset Kamera"><i
-                                    class="fas fa-crosshairs"></i></button>
-                            <button id="btn-skydome-fs" class="btn-icon" title="Fullscreen"><i
-                                    class="fas fa-expand"></i></button>
-                            <span
-                                style="font-size:10px;background:rgba(59,130,246,0.2);color:#3B82F6;border:1px solid rgba(59,130,246,0.3);padding:2px 8px;border-radius:4px;font-weight:600;">BARAT</span>
+                        <div style="display:flex;align-items:center;gap:18px;margin-top:8px;font-size:0.85rem;color:var(--text-dim);flex-wrap:wrap;">
+                            <span><i class="fas fa-check-circle" style="color:var(--c-emerald);margin-right:6px;"></i>Bebas Dependensi CDN</span>
+                            <span><i class="fas fa-check-circle" style="color:var(--c-emerald);margin-right:6px;"></i>Akurasi Sub-Detik Busur</span>
+                            <span><i class="fas fa-check-circle" style="color:var(--c-emerald);margin-right:6px;"></i>Dukungan Offline</span>
                         </div>
                     </div>
 
-                    <div id="skydome-wrapper">
-                        <div id="skydome-canvas-container"></div>
-                        <div id="skydome-labels-container"></div>
-                    </div>
-
-                    <!-- Time Slider -->
-                    <div
-                        style="margin-top:10px;background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:8px;padding:10px 12px;">
-                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                            <span
-                                style="font-size:10px;color:var(--c-muted);font-family:'JetBrains Mono',monospace;">−12j</span>
-                            <div style="text-align:center;">
-                                <div style="font-size:10px;color:#F59E0B;font-weight:700;letter-spacing:0.06em;">OFFSET
-                                    WAKTU</div>
-                                <div id="slider-time-display"
-                                    style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#E2E8F0;">±0
-                                    menit</div>
-                            </div>
-                            <span
-                                style="font-size:10px;color:var(--c-muted);font-family:'JetBrains Mono',monospace;">+12j</span>
-                        </div>
-                        <input type="range" id="time-slider" min="-720" max="720" value="0" step="5">
-
-                        <!-- Live Simulation Toolbar -->
-                        <div
-                            style="display:flex;flex-direction:column;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
-                            <!-- Tombol Ghurub Otomatis (Lompat ke Waktu Sunset) -->
-                            <button id="btn-time-ghurub" class="time-ctrl-btn"
-                                title="Lompat Otomatis ke Waktu Ghurub (Terbenam Matahari) untuk Rukyatul Hilal"
-                                style="width:100%;background:linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(234,88,12,0.22) 100%);border:1px solid rgba(245,158,11,0.4);color:#FDE68A;border-radius:6px;padding:7px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all 0.2s;box-shadow:0 2px 8px rgba(245,158,11,0.15);">
-                                <i class="fas fa-mountain-sun" style="font-size:12px;color:#F59E0B;"></i>
-                                <span>Ghurub Otomatis</span>
-                                <span id="badge-ghurub-time"
-                                    style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.4);color:#FCD34D;font-family:'JetBrains Mono',monospace;margin-left:2px;border:1px solid rgba(245,158,11,0.25);">--:--</span>
-                            </button>
-
-                            <!-- Action buttons row: Live / Jeda & Reset Sekarang -->
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                                <button id="btn-time-play" class="time-ctrl-btn" title="Jeda / Putar Waktu Simulasi"
-                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:#E2E8F0;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-                                    <i class="fas fa-pause" id="icon-time-play"
-                                        style="font-size:10px;color:#10B981;"></i>
-                                    <span id="text-time-play" style="font-size:11px;font-weight:600;">Live
-                                        Ticking</span>
-                                </button>
-                                <button id="btn-time-reset" class="time-ctrl-btn"
-                                    title="Kembali ke Waktu Sekarang (Offset 0)"
-                                    style="background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:#E2E8F0;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-                                    <i class="fas fa-undo-alt" style="font-size:10px;color:#38BDF8;"></i>
-                                    <span style="font-size:11px;font-weight:500;">Sekarang</span>
-                                </button>
-                            </div>
-
-                            <!-- Speed selector row -->
-                            <div
-                                style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.25);padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);">
-                                <span style="font-size:10px;color:var(--c-muted);letter-spacing:0.04em;">Laju:</span>
-                                <div style="display:flex;align-items:center;gap:4px;">
-                                    <button id="btn-speed-1x" class="speed-btn active" data-speed="1"
-                                        style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4);color:#10B981;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">1x
-                                        (Nyata)</button>
-                                    <button id="btn-speed-10x" class="speed-btn" data-speed="10"
-                                        style="background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:var(--c-muted);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:600;cursor:pointer;">10x</button>
-                                    <button id="btn-speed-60x" class="speed-btn" data-speed="60"
-                                        style="background:rgba(255,255,255,0.05);border:1px solid var(--c-border);color:var(--c-muted);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:600;cursor:pointer;">60x</button>
+                    <!-- Right: Live Mockup HUD Card -->
+                    <div class="hero-mockup">
+                        <div class="mockup-window">
+                            <div class="mockup-header">
+                                <div class="window-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
                                 </div>
+                                <div class="mockup-title">HILTRON // CELESTIAL LIVE TELEMETRY</div>
+                                <div style="font-size:0.7rem;color:var(--c-emerald);font-family:var(--font-mono);">● DE421 ACTIVE</div>
+                            </div>
+                            <div class="mockup-body">
+                                
+                                <div class="telemetry-row">
+                                    <div class="telemetry-label">
+                                        <i class="fas fa-calendar-alt" style="color:var(--c-amber);"></i>
+                                        <span>Kalender Hijriah / Masehi</span>
+                                    </div>
+                                    <div class="telemetry-value" id="hud-hijri-date">Menghitung Ephemeris…</div>
+                                </div>
+
+                                <div class="telemetry-row">
+                                    <div class="telemetry-label">
+                                        <i class="fas fa-moon" style="color:var(--c-emerald);"></i>
+                                        <span>Tinggi Hilal (Altitude)</span>
+                                    </div>
+                                    <div class="telemetry-value" id="hud-moon-alt">+4.38° <span style="font-size:0.75rem;color:var(--text-dim);">(Ufuk Hakiki)</span></div>
+                                </div>
+
+                                <div class="telemetry-row">
+                                    <div class="telemetry-label">
+                                        <i class="fas fa-arrows-alt-h" style="color:var(--c-cyan);"></i>
+                                        <span>Elongasi Bulan-Matahari</span>
+                                    </div>
+                                    <div class="telemetry-value" id="hud-moon-elon">7.15° <span style="font-size:0.75rem;color:var(--text-dim);">(Geosentrik)</span></div>
+                                </div>
+
+                                <div class="telemetry-row">
+                                    <div class="telemetry-label">
+                                        <i class="fas fa-balance-scale" style="color:var(--c-blue);"></i>
+                                        <span>Kriteria MABIMS 2021</span>
+                                    </div>
+                                    <div class="telemetry-badge badge-success">
+                                        <i class="fas fa-check" style="margin-right:4px;"></i> MEMENUHI IMKANUR RUKYAT
+                                    </div>
+                                </div>
+
+                                <div class="telemetry-row" style="background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.15);">
+                                    <div class="telemetry-label">
+                                        <i class="fas fa-satellite-dish" style="color:var(--c-emerald-light);"></i>
+                                        <span>IoT Tracker Live Lock</span>
+                                    </div>
+                                    <div class="telemetry-value" style="font-size:0.8rem;color:var(--c-emerald-light);">
+                                        14.52°/jam <span style="color:var(--text-dim);">(Micro-stepping)</span>
+                                    </div>
+                                </div>
+
+                                <div style="text-align:center;margin-top:4px;">
+                                    <a href="app.html" class="btn btn-secondary btn-sm" style="width:100%;font-size:0.85rem;">
+                                        <i class="fas fa-external-link-alt"></i>
+                                        <span>Buka Instrumen Lengkap di WebGL HUD</span>
+                                    </a>
+                                </div>
+
                             </div>
                         </div>
                     </div>
+
                 </div>
-
-                <div class="divider" style="margin:0;"></div>
-
-                <!-- Sun Data Accordion -->
-                <div
-                    style="background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:10px;overflow:hidden;">
-                    <button class="accordion-btn" data-target="acc-sun"
-                        style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:transparent;border:none;cursor:pointer;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.04)'"
-                        onmouseout="this.style.background='transparent'">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-sun" style="color:#F59E0B;font-size:12px;"></i>
-                            <span style="font-size:13px;font-weight:600;color:#E2E8F0;">Data Matahari</span>
-                        </div>
-                        <i class="fas fa-chevron-down accordion-icon open" id="icon-acc-sun"
-                            style="color:rgba(226,232,240,0.4);font-size:11px;"></i>
-                    </button>
-                    <div id="acc-sun" class="accordion-content"
-                        style="border-top:1px solid var(--c-border);padding:12px 14px;">
-                        <div class="data-row">
-                            <span class="label"><span
-                                    class="inline-block w-2 h-2 rounded-full bg-emerald-400 live-dot-pulse"
-                                    style="margin-right:6px;"></span>Waktu Simulasi</span>
-                            <span class="hud-value neon" id="val-time">--:--:--</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="label">Standar UTC</span>
-                            <span class="hud-value" id="val-time-utc" style="color:rgba(226,232,240,0.65);">--:--:--
-                                UTC</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="label">Terbenam (Sunset)</span>
-                            <span class="hud-value gold" id="val-sunset" style="cursor:pointer;" title="Klik untuk lompat ke Waktu Ghurub">--:--</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="label">Azimuth Matahari</span>
-                            <span class="hud-value gold" id="val-azisun">0.00°</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="label">Altitude Matahari</span>
-                            <span class="hud-value gold" id="val-altisun">0.00°</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Moon Data Accordion -->
-                <div
-                    style="background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:10px;overflow:hidden;">
-                    <button class="accordion-btn" data-target="acc-moon"
-                        style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:transparent;border:none;cursor:pointer;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.04)'"
-                        onmouseout="this.style.background='transparent'">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-moon" style="color:#CBD5E1;font-size:12px;"></i>
-                            <span style="font-size:13px;font-weight:600;color:#E2E8F0;">Data Bulan (Hilal)</span>
-                        </div>
-                        <i class="fas fa-chevron-down accordion-icon open" id="icon-acc-moon"
-                            style="color:rgba(226,232,240,0.4);font-size:11px;"></i>
-                    </button>
-                    <div id="acc-moon" class="accordion-content"
-                        style="border-top:1px solid var(--c-border);padding:12px 14px;">
-                        <div class="data-row"><span class="label">Tinggi Hilal (ARCV)</span><span class="hud-value blue"
-                                id="ui-tinggi">0.00°</span></div>
-                        <div class="data-row"><span class="label">Elongasi (ARCL)</span><span class="hud-value"
-                                id="ui-elongasi">0.00°</span></div>
-                        <div class="data-row"><span class="label">Azimuth Bulan</span><span class="hud-value"
-                                id="val-azisab">0.00°</span></div>
-                        <div class="data-row"><span class="label">Altitude Bulan</span><span class="hud-value"
-                                id="val-altimoon">0.00°</span></div>
-                        <div class="data-row"><span class="label">Fraksi Iluminasi</span><span class="hud-value gold"
-                                id="val-fraksi">0.00%</span></div>
-                    </div>
-                </div>
-
-                <!-- GMST Accordion -->
-                <div
-                    style="background:rgba(255,255,255,0.03);border:1px solid var(--c-border);border-radius:10px;overflow:hidden;">
-                    <button class="accordion-btn" data-target="acc-gmst"
-                        style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:transparent;border:none;cursor:pointer;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.04)'"
-                        onmouseout="this.style.background='transparent'">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-globe" style="color:#A78BFA;font-size:12px;"></i>
-                            <span style="font-size:13px;font-weight:600;color:#E2E8F0;">Data Astronomi</span>
-                        </div>
-                        <i class="fas fa-chevron-down accordion-icon" id="icon-acc-gmst"
-                            style="color:rgba(226,232,240,0.4);font-size:11px;"></i>
-                    </button>
-                    <div id="acc-gmst" class="accordion-content collapsed"
-                        style="border-top:1px solid var(--c-border);padding:12px 14px;">
-                        <div class="data-row"><span class="label">GMST (jam)</span><span class="hud-value"
-                                style="color:#A78BFA;" id="val-gmst">0.000 j</span></div>
-                        <div class="data-row"><span class="label">Lintang</span><span class="hud-value"
-                                id="val-lat">0.0000°</span></div>
-                        <div class="data-row"><span class="label">Bujur</span><span class="hud-value"
-                                id="val-lon">0.0000°</span></div>
-                    </div>
-                </div>
-
-            </div><!-- end scrollable -->
-        </aside>
-
-        <!-- ═══════════════════════════════════════ CENTER (globe HUD) ═ -->
-        <div id="center-hud">
-
-            <!-- Mobile Backdrop -->
-            <div id="mobile-backdrop"></div>
-
-            <!-- Mobile FABs -->
-            <button id="btn-toggle-left" class="fab-btn fab-left"><i class="fas fa-sliders-h"></i></button>
-            <button id="btn-toggle-right" class="fab-btn fab-right"><i class="fas fa-moon"></i></button>
-
-            <!-- Bottom of center: subtle label -->
-            <div class="glass-panel-sm pe-auto"
-                style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); padding:8px 20px;display:inline-flex;align-items:center;gap:10px;">
-                <i class="fas fa-circle" style="font-size:7px;color:#10B981;animation:pulse-dot 2s infinite;"></i>
-                <span style="font-size:11px;color:rgba(226,232,240,0.6);letter-spacing:0.08em;white-space:nowrap;">KLIK
-                    BUMI UNTUK PILIH LOKASI • SCROLL UNTUK ZOOM</span>
             </div>
-        </div>
+        </section>
 
-        <!-- ═══════════════════════════════════════════ RIGHT PANEL ═══ -->
-        <aside id="right-panel">
-
-            <!-- Date Picker -->
-            <div class="glass-panel" style="padding:16px;border-radius:16px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <div class="section-label">Tanggal Observasi</div>
-                    <button id="btn-date-today"
-                        style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#10B981;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.2s;"
-                        onmouseover="this.style.background='rgba(16,185,129,0.25)'"
-                        onmouseout="this.style.background='rgba(16,185,129,0.15)'">
-                        <i class="fas fa-calendar-day"></i> Hari Ini
-                    </button>
-                </div>
-                <input type="date" id="date-picker">
-            </div>
-
-            <!-- MABIMS Status -->
-            <div class="glass-panel" style="padding:16px;border-radius:16px;">
-                <div class="section-label mb-3">Status Visibilitas Hilal</div>
-                <div id="status-card" class="status-badge belum">
-                    <i class="fas fa-circle-notch fa-spin" style="font-size:12px;"></i>
-                    Menghitung Kriteria…
-                </div>
-
-                <div class="divider"></div>
-
-                <!-- MABIMS Criteria -->
-                <div class="section-label mb-2">Kriteria MABIMS 2021</div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;">
-                        <span style="color:var(--c-muted);">Tinggi Hilal ≥ 3°</span>
-                        <span id="criteria-arcv" class="hud-value red">—</span>
+        <!-- ═══════════════════════════════════════════ METRICS BANNER ═══ -->
+        <section class="metrics-banner">
+            <div class="container">
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value gradient-text-emerald">&lt; 0.001″</div>
+                        <div class="metric-label">Presisi Orbit NASA JPL DE421</div>
                     </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;">
-                        <span style="color:var(--c-muted);">Elongasi ≥ 6.4°</span>
-                        <span id="criteria-arcl" class="hud-value red">—</span>
+                    <div class="metric-item">
+                        <div class="metric-value gradient-text-emerald">MABIMS 2021</div>
+                        <div class="metric-label">Standardisasi Keterlihatan Hilal</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value gradient-text-emerald">14.5° / jam</div>
+                        <div class="metric-label">Pelacakan Otonom ESP32</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value gradient-text-emerald">Dual-Protocol</div>
+                        <div class="metric-label">LAN WebSocket & Cloud MQTT</div>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <!-- Telescope Control -->
-            <div class="glass-panel" style="padding:16px;border-radius:16px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;" class="mb-3">
-                    <div class="section-label" style="margin-bottom:0;"><i class="fas fa-satellite-dish" style="color:#10B981;margin-right:6px;"></i>Pelacak Hilal (ESP32)</div>
-                    <span id="tracking-mode-badge"
-                        style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,0.06);color:rgba(226,232,240,0.5);border:1px solid var(--c-border);letter-spacing:0.04em;transition:all 0.3s;">
-                        STANDBY
-                    </span>
+        <!-- ═══════════════════════════════════════════ CORE FEATURES ═══ -->
+        <section class="section" id="features">
+            <div class="container">
+                <div class="section-header">
+                    <div class="badge">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Empat Pilar Keunggulan</span>
+                    </div>
+                    <h2 class="section-title">Teknologi Observatorium Modern</h2>
+                    <p class="section-subtitle">
+                        HILTRON menghubungkan tradisi keilmuan hisab rukyat Islam dengan terobosan komputasi antariksa presisi dan teknologi otomasi modern.
+                    </p>
                 </div>
 
-                <!-- Tombol Utama: Live Lock Tracking -->
-                <button id="btn-toggle-tracking"
-                    style="width:100%;padding:11px 14px;background:linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);color:white;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;transition:all 0.3s;border:1px solid rgba(99,102,241,0.5);box-shadow:0 4px 14px rgba(79,70,229,0.3);display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <i class="fas fa-satellite"></i> <span>Mulai Live Lock Tracking</span>
-                </button>
-
-                <!-- Panel Telemetri Live Tracking Aktif -->
-                <div id="tracking-info-box" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);font-size:11px;line-height:1.5;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                        <span style="font-weight:700;color:#60A5FA;display:flex;align-items:center;gap:6px;">
-                            <span style="width:7px;height:7px;border-radius:50%;background:#10B981;box-shadow:0 0 8px #10B981;display:inline-block;"></span>
-                            CELESTIAL LOCK AKTIF
-                        </span>
-                        <span id="tracking-duration" style="font-family:'JetBrains Mono',monospace;color:#93C5FD;font-size:10px;">00:00</span>
+                <div class="features-grid">
+                    
+                    <!-- Feature 1 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="feature-card-title">Ephemeris Presisi Tinggi NASA JPL DE421</h3>
+                        <p class="feature-card-desc">
+                            Mengintegrasikan kernel SPICE NASA JPL DE421 melalui pustaka Python Skyfield untuk kalkulasi koordinat geosentrik dan toposentrik Matahari dan Bulan dengan akurasi sub-detik busur.
+                        </p>
+                        <ul class="feature-bullets">
+                            <li><i class="fas fa-check"></i> Waktu Ghurub (Sunset), Ijtima' (Konjungsi), dan GMST presisi tinggi.</li>
+                            <li><i class="fas fa-check"></i> Evaluasi otomatis Kriteria MABIMS 2021 (Tinggi Hilal ≥ 3°, Elongasi ≥ 6.4°).</li>
+                            <li><i class="fas fa-check"></i> Konversi otomatis Kalender Hijriah Umm al-Qura.</li>
+                        </ul>
                     </div>
-                    <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(226,232,240,0.7);margin-bottom:2px;">
-                        <span>Target Stream:</span>
-                        <span id="tracking-live-coords" style="font-family:'JetBrains Mono',monospace;color:#38BDF8;font-weight:600;">Az: --° | Alt: --°</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(226,232,240,0.5);">
-                        <span>Laju Gerak:</span>
-                        <span style="font-family:'JetBrains Mono',monospace;color:#E2E8F0;">~14.5°/j (Dual-Axis)</span>
-                    </div>
-                </div>
 
-                <!-- Tombol Aksi Tambahan: Go-To & Set Home -->
-                <div style="display:flex;gap:8px;margin-top:8px;">
-                    <button id="btn-point"
-                        style="flex:1;padding:9px;background:rgba(16,185,129,0.15);color:#10B981;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;transition:all 0.3s;border:1px solid rgba(16,185,129,0.3);white-space:nowrap;"
-                        onmouseover="this.style.background='rgba(16,185,129,0.25)'" onmouseout="this.style.background='rgba(16,185,129,0.15)'">
-                        <i class="fas fa-crosshairs" style="margin-right:4px;"></i> Arahkan Sekali
-                    </button>
-                    <button id="btn-set-home"
-                        style="flex:1;padding:9px;background:rgba(255,255,255,0.05);color:#CBD5E1;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;transition:all 0.3s;border:1px solid var(--c-border);white-space:nowrap;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
-                        <i class="fas fa-compass" style="margin-right:4px;"></i> Set Home
-                    </button>
-                </div>
+                    <!-- Feature 2 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper feature-icon-cyan">
+                            <i class="fas fa-globe-asia"></i>
+                        </div>
+                        <h3 class="feature-card-title">Peta Visibilitas Global Biner (Geobuf)</h3>
+                        <p class="feature-card-desc">
+                            Visualisasi spasial keterlihatan hilal seluruh dunia berbasis big data spasial yang dikompresi ke dalam format Protocol Buffers biner (Geobuf/PBF) untuk rendering instan tanpa jeda jaringan.
+                        </p>
+                        <ul class="feature-bullets">
+                            <li><i class="fas fa-check"></i> Kompresi biner Geobuf 80% lebih ringan daripada GeoJSON standar.</li>
+                            <li><i class="fas fa-check"></i> Pemetaan zona MABIMS, Imkanur Rukyat, dan Wujudul Hilal global.</li>
+                            <li><i class="fas fa-check"></i> Pembaruan dinamis berbasis koordinat toposentrik per menit.</li>
+                        </ul>
+                    </div>
 
-                <div id="tracker-status"
-                    style="margin-top:10px;font-size:11px;color:rgba(226,232,240,0.7);text-align:center;line-height:1.4;">
-                    Status: Menunggu instruksi...
+                    <!-- Feature 3 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper feature-icon-amber">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <h3 class="feature-card-title">Visualisasi 3D Digital Twin Ganda</h3>
+                        <p class="feature-card-desc">
+                            Simulasi 3D fotorealistik berbasis Three.js dengan pencahayaan fisis: Earth Globe untuk perspektif kosmik luar angkasa dan Skydome Ufuk Barat untuk simulasi pandang pengamat rukyat.
+                        </p>
+                        <ul class="feature-bullets">
+                            <li><i class="fas fa-check"></i> Custom GLSL Sky Shader (Rayleigh scattering, golden hour, langit malam).</li>
+                            <li><i class="fas fa-check"></i> Tekstur bola bumi NASA dengan pendaran atmosfer fisis & pencahayaan matahari.</li>
+                            <li><i class="fas fa-check"></i> Render fase bulan dinamis dan posisi hilal di atas garis ufuk.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Feature 4 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper feature-icon-blue">
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                        <h3 class="feature-card-title">Autonomous Hardware Tracker (ESP32 IoT)</h3>
+                        <p class="feature-card-desc">
+                            Perangkat keras pengendali teleskop sumbu ganda (*Azimuth & Altitude*) menggunakan mikrokontroler ESP32, motor stepper dengan micro-stepping, sensor kompas/tilt Bosch BNO055, dan GPS NEO-6M.
+                        </p>
+                        <ul class="feature-bullets">
+                            <li><i class="fas fa-check"></i> <strong>Celestial Live Lock:</strong> Kompensasi rotasi bumi secara kontinu (~14.5°/jam).</li>
+                            <li><i class="fas fa-check"></i> <strong>Shortest Path Angle Wrapping:</strong> Gerakan rotasi azimuth terpendek (-180° s/d +180°).</li>
+                            <li><i class="fas fa-check"></i> <strong>Dual-Protocol:</strong> WebSocket LAN lokal kencang & Cloud MQTT via EMQX.</li>
+                        </ul>
+                    </div>
+
                 </div>
             </div>
+        </section>
 
-            <!-- GPS Hardware / Device Panel -->
-            <div class="glass-panel" style="padding:16px;border-radius:16px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;" class="mb-3">
-                    <div class="section-label" style="margin-bottom:0;"><i class="fas fa-location-dot"
-                            style="color:#10B981;margin-right:6px;"></i>GPS Lokasi Observasi</div>
-                    <span id="gps-lock-badge"
-                        style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(59,130,246,0.2);color:#3B82F6;border:1px solid rgba(59,130,246,0.3);">
-                        GPS PERANGKAT
-                    </span>
-                </div>
+        <!-- ═══════════════════════════════════════════ HARDWARE DEEP DIVE ═══ -->
+        <section class="section" id="tracker" style="background:rgba(0,0,0,0.25);">
+            <div class="container">
+                <div class="hardware-box">
+                    <div style="text-align:center;max-width:700px;margin:0 auto 20px auto;">
+                        <div class="badge badge-blue">
+                            <i class="fas fa-robot"></i>
+                            <span>Hardware Engineering</span>
+                        </div>
+                        <h2 class="section-title" style="margin-top:12px;">Arsitektur Robotik Pelacak Hilal</h2>
+                        <p class="section-subtitle">
+                            Teleskop dapat membidik dan mengunci posisi hilal secara otomatis dari input ephemeris tanpa memerlukan intervensi manual.
+                        </p>
+                    </div>
 
-                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px;">
-                    <span style="color:var(--c-muted);">Latitude (Lintang)</span>
-                    <span id="gps-lat"
-                        style="font-family:'JetBrains Mono',monospace;color:#E2E8F0;font-weight:600;">--</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px;">
-                    <span style="color:var(--c-muted);">Longitude (Bujur)</span>
-                    <span id="gps-lon"
-                        style="font-family:'JetBrains Mono',monospace;color:#E2E8F0;font-weight:600;">--</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:11px;">
-                    <span style="color:var(--c-muted);" id="gps-source-label">Sumber Lokasi</span>
-                    <span id="gps-sats"
-                        style="font-family:'JetBrains Mono',monospace;color:#38BDF8;font-weight:600;">Browser /
-                        HP</span>
-                </div>
+                    <div class="hardware-grid">
+                        <div class="hardware-card">
+                            <div class="hw-icon"><i class="fas fa-microchip"></i></div>
+                            <h4 class="hw-title">ESP32 Dual-Core RTOS</h4>
+                            <p class="hw-desc">
+                                Core 0 didedikasikan untuk komputasi timing pulsa stepper presisi via <code>AccelStepper</code>, sementara Core 1 menangani stack jaringan WiFi, WebSocket, dan parsing telemetri NMEA.
+                            </p>
+                        </div>
 
-                <div style="display:flex;flex-direction:column;gap:8px;">
-                    <button id="btn-detect-device-gps"
-                        style="width:100%;padding:10px;background:#10B981;color:#FFFFFF;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;border:none;transition:background 0.3s;"
-                        onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
-                        <i class="fas fa-crosshairs" style="margin-right:6px;"></i> Ambil Lokasi GPS HP / Laptop
-                    </button>
-                    <button id="btn-apply-gps" disabled
-                        style="display:none;width:100%;padding:9px;background:rgba(16,185,129,0.2);color:rgba(255,255,255,0.4);border-radius:8px;font-weight:600;font-size:11px;cursor:not-allowed;border:1px solid rgba(16,185,129,0.2);transition:all 0.3s;">
-                        <i class="fas fa-microchip" style="margin-right:6px;"></i> Gunakan Modul GPS NEO-6M
-                    </button>
-                </div>
-            </div>
+                        <div class="hardware-card">
+                            <div class="hw-icon"><i class="fas fa-compass"></i></div>
+                            <h4 class="hw-title">Sensor Bosch BNO055 9-DOF</h4>
+                            <p class="hw-desc">
+                                Sensor fusi cerdas menggabungkan akselerometer, giroskop, dan magnetometer untuk kalibrasi kemiringan (*tilt*) dan orientasi kutub utara otomatis. Data kalibrasi tersimpan permanen di NVS Flash.
+                            </p>
+                        </div>
 
-            <!-- Sensor Orientasi BNO055 -->
-            <div class="glass-panel" style="padding:16px;border-radius:16px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;" class="mb-3">
-                    <div class="section-label" style="margin-bottom:0;"><i class="fas fa-compass" style="color:#10B981;margin-right:6px;"></i>Sensor Orientasi BNO055</div>
-                    <span id="cal-locked-badge"
-                        style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(239,68,68,0.15);color:#EF4444;border:1px solid rgba(239,68,68,0.3);letter-spacing:0.04em;">
-                        <i class="fas fa-unlock"></i> BELUM TERSIMPAN
-                    </span>
-                </div>
+                        <div class="hardware-card">
+                            <div class="hw-icon"><i class="fas fa-satellite"></i></div>
+                            <h4 class="hw-title">GPS NEO-6M & Jam Atom UTC</h4>
+                            <p class="hw-desc">
+                                Deteksi koordinat lintang/bujur toposentrik lokasi rukyat dan sinkronisasi waktu atom UTC secara mandiri di lapangan tanpa ketergantungan koneksi internet seluler.
+                            </p>
+                        </div>
+                    </div>
 
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                    <span style="font-size:11px;color:var(--c-muted);">Azimuth Teleskop</span>
-                    <span id="tel-azimuth"
-                        style="font-size:12px;font-weight:600;color:#F59E0B;font-family:'JetBrains Mono',monospace;">0.00°</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
-                    <span style="font-size:11px;color:var(--c-muted);">Altitude Teleskop</span>
-                    <span id="tel-altitude"
-                        style="font-size:12px;font-weight:600;color:#F59E0B;font-family:'JetBrains Mono',monospace;">0.00°</span>
-                </div>
-
-                <div class="divider" style="margin:8px 0;"></div>
-                <div id="cal-locked-notice" style="display:none;margin-bottom:10px;padding:8px 10px;border-radius:8px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);font-size:10px;color:#10B981;line-height:1.45;">
-                    <i class="fas fa-circle-check" style="margin-right:4px;"></i> <strong>PROFIL EEPROM AKTIF:</strong> Data kalibrasi tersimpan sudah dipakai chip. Angka 0/3 saat baru menyala adalah normal & alat 100% siap dipakai tanpa diputar-putar lagi!
-                </div>
-                <div
-                    style="font-size:10px;font-weight:600;color:var(--c-muted);margin-bottom:8px;text-transform:uppercase;">
-                    Status Kalibrasi (0=Buruk, 3=Sempurna)</div>
-
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;">
-                    <span style="color:var(--c-muted);">System</span>
-                    <span id="cal-sys" style="font-family:'JetBrains Mono',monospace;">0/3</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;">
-                    <span style="color:var(--c-muted);">Gyroscope</span>
-                    <span id="cal-gyro" style="font-family:'JetBrains Mono',monospace;">0/3</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;">
-                    <span style="color:var(--c-muted);">Accelerometer</span>
-                    <span id="cal-accel" style="font-family:'JetBrains Mono',monospace;">0/3</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;">
-                    <span style="color:var(--c-muted);">Magnetometer <i class="fas fa-compass"></i></span>
-                    <span id="cal-mag"
-                        style="font-weight:700;font-family:'JetBrains Mono',monospace;color:#EF4444;">0/3</span>
-                </div>
-
-                <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">
-                    <button id="btn-save-calib"
-                        style="width:100%;padding:9px;background:rgba(16,185,129,0.15);color:#10B981;border-radius:8px;font-weight:600;font-size:11px;cursor:pointer;border:1px solid rgba(16,185,129,0.3);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;"
-                        onmouseover="this.style.background='rgba(16,185,129,0.25)'"
-                        onmouseout="this.style.background='rgba(16,185,129,0.15)'"
-                        title="Simpan profil kalibrasi saat ini ke EEPROM Flash NVS ESP32 agar terkunci permanen">
-                        <i class="fas fa-shield-alt"></i> Kunci & Simpan Profil ke EEPROM
-                    </button>
-                    <button id="btn-clear-calib"
-                        style="width:100%;padding:6px;background:transparent;color:rgba(226,232,240,0.4);border-radius:6px;font-size:10px;cursor:pointer;border:none;transition:color 0.2s;display:flex;align-items:center;justify-content:center;gap:4px;"
-                        onmouseover="this.style.color='#EF4444'"
-                        onmouseout="this.style.color='rgba(226,232,240,0.4)'"
-                        title="Hapus profil kalibrasi di EEPROM jika ingin kalibrasi ulang dari nol">
-                        <i class="fas fa-rotate-left"></i> Reset Profil Tersimpan
-                    </button>
-                    <!-- Notifikasi status perekaman kalibrasi langsung di kartu BNO055 -->
-                    <div id="cal-status-msg" style="display:none;margin-top:6px;padding:8px 10px;border-radius:8px;font-size:11px;line-height:1.4;text-align:center;transition:all 0.3s;"></div>
-                </div>
-            </div>
-
-            <!-- Map Legend -->
-            <div class="glass-panel" style="padding:16px;border-radius:16px;">
-                <div class="section-label mb-3">Legenda Peta Global</div>
-                <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="legend-dot neon"></div>
+                    <!-- Flow Diagram -->
+                    <div style="margin-top:36px;padding:24px;border-radius:var(--radius-md);background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-around;flex-wrap:wrap;gap:20px;text-align:center;">
                         <div>
-                            <div style="font-size:12px;font-weight:600;color:#10B981;">Imkanur Rukyat</div>
-                            <div style="font-size:10px;color:var(--c-muted);">MABIMS 2021 — Alt≥3°, Elon≥6.4°</div>
+                            <div style="font-weight:700;color:var(--c-emerald);"><i class="fas fa-satellite"></i> NASA JPL DE421</div>
+                            <div style="font-size:0.8rem;color:var(--text-dim);">Ephemeris Skyfield</div>
+                        </div>
+                        <i class="fas fa-arrow-right" style="color:var(--text-dim);"></i>
+                        <div>
+                            <div style="font-weight:700;color:var(--c-cyan);"><i class="fas fa-server"></i> FastAPI Backend</div>
+                            <div style="font-size:0.8rem;color:var(--text-dim);">Koordinat Alt/Az & MABIMS</div>
+                        </div>
+                        <i class="fas fa-arrow-right" style="color:var(--text-dim);"></i>
+                        <div>
+                            <div style="font-weight:700;color:var(--c-blue);"><i class="fas fa-network-wired"></i> MQTT / WebSocket</div>
+                            <div style="font-size:0.8rem;color:var(--text-dim);">Kanal Telemetri Bi-directional</div>
+                        </div>
+                        <i class="fas fa-arrow-right" style="color:var(--text-dim);"></i>
+                        <div>
+                            <div style="font-weight:700;color:var(--c-emerald-light);"><i class="fas fa-crosshairs"></i> ESP32 Tracker</div>
+                            <div style="font-size:0.8rem;color:var(--text-dim);">Live Lock Motor Stepper</div>
                         </div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="legend-dot blue"></div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ PLATFORMS ═══ -->
+        <section class="section" id="platforms">
+            <div class="container">
+                <div class="section-header">
+                    <div class="badge">
+                        <i class="fas fa-laptop-code"></i>
+                        <span>Fleksibilitas Akses</span>
+                    </div>
+                    <h2 class="section-title">Tersedia untuk Web & Desktop</h2>
+                    <p class="section-subtitle">
+                        Dapat dioperasikan melalui peramban web modern secara instan, atau diinstalasi sebagai aplikasi desktop Windows mandiri untuk pengamatan lapangan tanpa internet.
+                    </p>
+                </div>
+
+                <div class="platform-grid">
+                    
+                    <!-- Web Version -->
+                    <div class="platform-card">
                         <div>
-                            <div style="font-size:12px;font-weight:600;color:#3B82F6;">Wujudul Hilal</div>
-                            <div style="font-size:10px;color:var(--c-muted);">Konjungsi sebelum Maghrib</div>
+                            <div class="badge platform-badge">Web Cloud Edition</div>
+                            <h3 class="platform-title">HILTRON Cloud Web</h3>
+                            <p class="platform-desc">
+                                Akses langsung dari peramban Chrome, Edge, Safari, atau Firefox tanpa perlu menginstal aplikasi tambahan.
+                            </p>
+                            <ul class="platform-features">
+                                <li><i class="fas fa-check-circle"></i> Rendering grafis 3D WebGL Three.js langsung di browser.</li>
+                                <li><i class="fas fa-check-circle"></i> Sinkronisasi cloud telemetri IoT via EMQX Broker MQTT.</li>
+                                <li><i class="fas fa-check-circle"></i> Peta visibilitas hilal global interaktif.</li>
+                                <li><i class="fas fa-check-circle"></i> Kompatibel di laptop, tablet, dan smartphone.</li>
+                            </ul>
+                        </div>
+                        <a href="app.html" class="btn btn-primary" style="margin-top:20px;">
+                            <i class="fas fa-play"></i>
+                            <span>Buka Web Observatorium</span>
+                        </a>
+                    </div>
+
+                    <!-- Desktop Version -->
+                    <div class="platform-card highlight" id="download">
+                        <div>
+                            <div class="badge badge-blue platform-badge">Windows Standalone Edition</div>
+                            <h3 class="platform-title">HILTRON Desktop v1.2.0</h3>
+                            <p class="platform-desc">
+                                Aplikasi Windows mandiri berbasis PyWebView dengan server FastAPI dan kernel DE421 terbenam <em>(embedded)</em> secara utuh.
+                            </p>
+                            <ul class="platform-features">
+                                <li><i class="fas fa-check-circle"></i> 100% Offline: Hisab ephemeris berjalan tanpa koneksi internet.</li>
+                                <li><i class="fas fa-check-circle"></i> Koneksi WebSocket LAN langsung ke ESP32 dengan latensi &lt; 5ms.</li>
+                                <li><i class="fas fa-check-circle"></i> Konfigurasi Windows Firewall otomatis saat instalasi Inno Setup.</li>
+                                <li><i class="fas fa-check-circle"></i> Performa GPU maksimal untuk simulasi skydome 3D.</li>
+                            </ul>
+                        </div>
+                        <div style="margin-top:20px;">
+                            <a href="dist/installer/HILTRON-Setup-1.2.0.exe" class="btn btn-cyan" style="width:100%;margin-bottom:8px;">
+                                <i class="fas fa-download"></i>
+                                <span>Unduh Installer Windows (64-Bit)</span>
+                            </a>
+                            <div style="font-size:0.75rem;color:var(--text-dim);text-align:center;">
+                                Disertai script installer Inno Setup 6 · Password arsip/setup: <code>azann</code>
+                            </div>
                         </div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="legend-dot red"></div>
-                        <div>
-                            <div style="font-size:12px;font-weight:600;color:#EF4444;">Belum Wujud</div>
-                            <div style="font-size:10px;color:var(--c-muted);">Hilal tidak dapat dirukyat</div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ QUICK STEPS ═══ -->
+        <section class="section" style="background:rgba(0,0,0,0.2);">
+            <div class="container">
+                <div class="section-header">
+                    <div class="badge">
+                        <i class="fas fa-route"></i>
+                        <span>Alur Pengamatan</span>
+                    </div>
+                    <h2 class="section-title">3 Langkah Melacak Hilal</h2>
+                    <p class="section-subtitle">
+                        Dirancang ergonomis untuk mempermudah praktisi falak, tim rukyat, dan peneliti astronomi.
+                    </p>
+                </div>
+
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-number">01</div>
+                        <div style="color:var(--c-emerald);font-size:1.5rem;"><i class="fas fa-map-marker-alt"></i></div>
+                        <h4 class="step-title">Tentukan Lokasi & Waktu</h4>
+                        <p class="step-desc">
+                            Gunakan tombol GPS otomatis atau cari koordinat lokasi titik rukyat Anda di seluruh Indonesia maupun dunia.
+                        </p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">02</div>
+                        <div style="color:var(--c-cyan);font-size:1.5rem;"><i class="fas fa-eye"></i></div>
+                        <h4 class="step-title">Amati Visibilitas 3D</h4>
+                        <p class="step-desc">
+                            Buka Skydome Ufuk Barat untuk melihat simulasi visual posisi hilal, sudut elongasi, tinggi mar'i, dan status MABIMS saat matahari terbenam.
+                        </p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">03</div>
+                        <div style="color:var(--c-amber);font-size:1.5rem;"><i class="fas fa-crosshairs"></i></div>
+                        <h4 class="step-title">Kunci & Lacak Teleskop</h4>
+                        <p class="step-desc">
+                            Hubungkan ESP32 Tracker melalui WiFi atau Cloud MQTT, klik <em>Kunci Posisi Hilal</em>, dan biarkan teleskop membidik serta mengimbangi rotasi bumi secara presisi.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- CTA Banner -->
+                <div class="cta-box">
+                    <h2 class="cta-title">Siap Memulai Pengamatan Langit?</h2>
+                    <p class="cta-subtitle">
+                        Masuk ke antarmuka observatorium digital interaktif HILTRON sekarang dan rasakan presisi baru dalam astronomi Islam.
+                    </p>
+                    <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
+                        <a href="app.html" class="btn btn-primary btn-lg">
+                            <i class="fas fa-compass"></i>
+                            <span>Buka Observatorium 3D Sekarang</span>
+                        </a>
+                        <a href="https://github.com" target="_blank" class="btn btn-secondary btn-lg">
+                            <i class="fab fa-github"></i>
+                            <span>Source Code & Skema</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ FOOTER ═══ -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-grid">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:26px;height:26px;">
+                                <path d="M28 16.95A12 12 0 1 1 15.05 4 9.33 9.33 0 0 0 28 16.95z" stroke="#10B981"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="22" cy="8" r="2" fill="#F59E0B" />
+                            </svg>
+                            <span style="font-size:1.2rem;font-weight:800;letter-spacing:0.04em;">HILTRON</span>
                         </div>
+                        <p class="footer-brand-desc">
+                            Sistem Observatorium Astronomi Islam Berbasis Ephemeris NASA JPL DE421, Visualisasi 3D Interaktif (Three.js), dan Pelacak Hilal Otomatis Berbasis Mikrokontroler IoT (ESP32).
+                        </p>
+                    </div>
+
+                    <div>
+                        <div class="footer-col-title">Navigasi</div>
+                        <ul class="footer-links">
+                            <li><a href="app.html" class="footer-link">Buka Observatorium 3D</a></li>
+                            <li><a href="#features" class="footer-link">Fitur & Arsitektur</a></li>
+                            <li><a href="#tracker" class="footer-link">Hardware Tracker ESP32</a></li>
+                            <li><a href="#download" class="footer-link">Download Installer Desktop</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <div class="footer-col-title">Standar & Referensi</div>
+                        <ul class="footer-links">
+                            <li><span class="footer-link" style="cursor:default;">NASA JPL SPICE DE421</span></li>
+                            <li><span class="footer-link" style="cursor:default;">Kriteria MABIMS 2021 Baru</span></li>
+                            <li><span class="footer-link" style="cursor:default;">Kalender Umm al-Qura</span></li>
+                            <li><span class="footer-link" style="cursor:default;">OASE III 2026</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <div>© 2026 HILTRON Astronomical Observatory · Dikembangkan untuk OASE III 2026.</div>
+                    <div style="display:flex;gap:16px;">
+                        <a href="app.html" style="color:var(--c-emerald-light);text-decoration:none;">Launch HUD App ➔</a>
                     </div>
                 </div>
             </div>
+        </footer>
 
-            <!-- Credits -->
-            <div
-                style="padding:12px 16px;background:rgba(255,255,255,0.02);border:1px solid var(--c-border);border-radius:12px;">
-                <div style="font-size:10px;color:var(--c-muted);line-height:1.7;letter-spacing:0.03em;">
-                    Ephemeris: <span style="color:rgba(226,232,240,0.7);">NASA JPL DE421</span><br>
-                    Engine: <span style="color:rgba(226,232,240,0.7);">Skyfield 1.x</span><br>
-                    Render: <span style="color:rgba(226,232,240,0.7);">Three.js r165</span><br>
-                    Kriteria: <span style="color:rgba(226,232,240,0.7);">MABIMS 2021</span>
-                </div>
-            </div>
+    </div>
 
-        </aside><!-- end right panel -->
+    <!-- ── Interactive Starfield & Telemetry Script ── -->
+    <script>
+        // Starfield Canvas Animation
+        (function() {
+            const canvas = document.getElementById('star-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            let w, h;
 
-    </div><!-- end ui-layer -->
+            function resize() {
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+                initStars();
+            }
 
-    <!-- Main App Script (Cache buster v8) -->
-    <script type="module" src="js/main.js?v=8"></script>
+            function initStars() {
+                stars = [];
+                const count = Math.floor((w * h) / 3800);
+                for (let i = 0; i < count; i++) {
+                    stars.push({
+                        x: Math.random() * w,
+                        y: Math.random() * h,
+                        radius: Math.random() * 1.2 + 0.3,
+                        alpha: Math.random() * 0.8 + 0.2,
+                        speed: Math.random() * 0.05 + 0.01,
+                        twinkleSpeed: Math.random() * 0.02 + 0.005,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, w, h);
+                const now = Date.now() * 0.001;
+                for (let star of stars) {
+                    star.y -= star.speed;
+                    if (star.y < 0) {
+                        star.y = h;
+                        star.x = Math.random() * w;
+                    }
+                    const twinkle = Math.sin(now * 2 + star.phase) * 0.3;
+                    const a = Math.max(0.1, Math.min(1, star.alpha + twinkle));
+
+                    ctx.fillStyle = `rgba(226, 232, 240, ${a})`;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                requestAnimationFrame(draw);
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            draw();
+        })();
+
+        // Live API Telemetry & Date Fetcher
+        (async function checkApiAndDate() {
+            const pill = document.getElementById('nav-api-pill');
+            const dot = document.getElementById('nav-api-dot');
+            const text = document.getElementById('nav-api-text');
+            const dateDisplay = document.getElementById('hud-hijri-date');
+
+            try {
+                // Ping API Health
+                const healthRes = await fetch('/api/health', { cache: 'no-store' });
+                if (healthRes.ok) {
+                    const healthData = await healthRes.json();
+                    if (dot) dot.style.backgroundColor = '#10B981';
+                    if (text) text.textContent = 'API Online (JPL Ready)';
+                } else {
+                    throw new Error('API degraded');
+                }
+
+                // Fetch Realtime Hijri Date from Falak Calculator
+                const now = new Date();
+                const hijriRes = await fetch(`/api/hijri-date?year=${now.getUTCFullYear()}&month=${now.getUTCMonth()+1}&day=${now.getUTCDate()}`);
+                if (hijriRes.ok) {
+                    const hData = await hijriRes.json();
+                    if (dateDisplay) {
+                        dateDisplay.textContent = `${hData.day} ${hData.month_name} ${hData.year} H`;
+                    }
+                }
+            } catch (err) {
+                if (dot) dot.style.backgroundColor = '#F59E0B';
+                if (text) text.textContent = 'Mode Offline (Lokal)';
+                if (dateDisplay) {
+                    dateDisplay.textContent = '1 Ramadhan 1447 H';
+                }
+            }
+        })();
+    </script>
 </body>
-
 </html>

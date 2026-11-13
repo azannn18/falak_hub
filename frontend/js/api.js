@@ -1,4 +1,5 @@
 export const API_BASE = "/api";
+
 export async function fetchEphemeris(lat, lon, date, timestamp) {
     try {
         const controller = new AbortController();
@@ -47,6 +48,67 @@ export async function fetchTelemetry() {
     try {
         const res = await fetch(`${API_BASE}/telemetry`);
         if (!res.ok) throw new Error("API Error");
+        return await res.json();
+    } catch (e) {
+        return null;
+    }
+}
+
+export async function sendStartTrackingApi(targetData) {
+    try {
+        const res = await fetch(`${API_BASE}/start-tracking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(targetData)
+        });
+        return await res.json();
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
+
+export async function sendLiveTrackingApi(targetData) {
+    try {
+        const res = await fetch(`${API_BASE}/live-tracking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(targetData)
+        });
+        return await res.json();
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
+
+export async function sendStopTrackingApi() {
+    try {
+        const res = await fetch(`${API_BASE}/stop-tracking`, { method: 'POST' });
+        return await res.json();
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
+
+export async function fetchSystemInfo() {
+    try {
+        const res = await fetch(`${API_BASE}/system-info`);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch (e) {
+        return null;
+    }
+}
+
+export async function fetchDeviceLocationFallback() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 9000);
+        const res = await fetch(`${API_BASE}/device-location`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) return null;
         return await res.json();
     } catch (e) {
         return null;

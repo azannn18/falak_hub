@@ -67,6 +67,10 @@ const bool INVERT_AZ_MOTOR  = true;
 float last_target_az  = -999.0;
 float last_target_alt = -999.0;
 
+// --- STATUS MODE CELESTIAL LIVE LOCK TRACKING ---
+bool is_live_tracking = false;
+unsigned long last_tracking_packet_ms = 0;
+
 #if BNO055_AVAILABLE
 Adafruit_BNO055 bnoA = Adafruit_BNO055(55, 0x28, &Wire);
 Adafruit_BNO055 bnoB = Adafruit_BNO055(55, 0x29, &Wire);
@@ -108,7 +112,7 @@ void parseNMEALine(String line);
 float convertDegMinToDec(String degMin, char dir);
 void readSensor();
 void sendTelemetry();
-void setTargetPosition(float target_az, float target_alt);
+void setTargetPosition(float target_az, float target_alt, bool is_live_stream = false);
 void handleIncomingCommand(const char* payload);
 void saveCalibrationOffsets();
 void clearCalibrationOffsets();
@@ -262,10 +266,16 @@ void loop() {
 #endif
     }
 
-    // Kirim telemetri (Orientasi + Kalibrasi + GPS) ke server tiap 1 detik
+    // Kirim telemetri (Orientasi + Kalibrasi + GPS + Tracking) ke server tiap 1 detik
     if (currentMillis - lastTelemetrySend >= 1000) {
         lastTelemetrySend = currentMillis;
         sendTelemetry();
+    }
+
+    // Safety Watchdog: Jika live tracking aktif namun stream terputus > 20 detik, nonaktifkan otomatis
+    if (is_live_tracking && (currentMillis - last_tracking_packet_ms > 20000)) {
+        is_live_tracking = false;
+        Serial.println("[WATCHDOG] Stream koordinat terhenti > 20s. Mode Live Tracking otomatis dinonaktifkan.");
     }
 }
 
@@ -423,16 +433,50 @@ void handleIncomingCommand(const char* payload) {
     const char* command = doc["command"];
     if (!command) return;
     
-    // Perintah Gerakkan Tracker ke Posisi Hilal
+    // Perintah Gerakkan Tracker ke Posisi Hilal (One-Shot Slew / Go-To)
     if (strcmp(command, "POINT_HILAL") == 0) {
         float target_azimuth = doc["target_azimuth"];
         float target_altitude = doc["target_altitude"];
         
-        Serial.println("\n>>> PERINTAH ARAHKAN HILAL DITERIMA <<<");
+        Serial.println("\n>>> PERINTAH ARAHKAN HILAL (GO-TO) DITERIMA <<<");
         Serial.printf("Target Azimuth  : %.2f\n", target_azimuth);
         Serial.printf("Target Altitude : %.2f\n", target_altitude);
         
-        setTargetPosition(target_azimuth, target_altitude);
+        setTargetPosition(target_azimuth, target_altitude, false);
+    }
+    // Perintah Mulai Celestial Live Lock Tracking
+    else if (strcmp(command, "START_TRACKING") == 0) {
+        float target_azimuth = doc["target_azimuth"];
+        float target_altitude = doc["target_altitude"];
+        is_live_tracking = true;
+        last_tracking_packet_ms = millis();
+        
+        Serial.println("\n=======================================================");
+        Serial.println(">>> [TRACKER] MODE CELESTIAL LIVE LOCK TRACKING: AKTIF <<<");
+        Serial.printf("  Target Awal Hilal: Azimuth=%.2f°, Altitude=%.2f°\n", target_azimuth, target_altitude);
+        Serial.println("=======================================================");
+        
+        setTargetPosition(target_azimuth, target_altitude, false);
+        if (webSocket.isConnected()) {
+            webSocket.sendTXT("{\"type\":\"event\",\"status\":\"TRACKING_STARTED\"}");
+        }
+    }
+    // Perintah Update Stream Koordinat Live Tracking
+    else if (strcmp(command, "LIVE_TRACKING") == 0) {
+        float target_azimuth = doc["target_azimuth"];
+        float target_altitude = doc["target_altitude"];
+        is_live_tracking = true;
+        last_tracking_packet_ms = millis();
+        
+        setTargetPosition(target_azimuth, target_altitude, true);
+    }
+    // Perintah Hentikan Live Tracking Hilal
+    else if (strcmp(command, "STOP_TRACKING") == 0) {
+        is_live_tracking = false;
+        Serial.println("\n>>> [TRACKER] LIVE LOCK TRACKING DIHENTIKAN. Posisi Motor Mengunci. <<<");
+        if (webSocket.isConnected()) {
+            webSocket.sendTXT("{\"type\":\"event\",\"status\":\"TRACKING_STOPPED\"}");
+        }
     }
     // Perintah Manual Simpan Kalibrasi BNO055
     else if (strcmp(command, "SAVE_CALIBRATION") == 0) {
@@ -462,20 +506,14 @@ void handleIncomingCommand(const char* payload) {
 // ==========================================
 // 8. LOGIKA PERGERAKAN MOTOR
 // ==========================================
-void setTargetPosition(float target_az, float target_alt) {
+void setTargetPosition(float target_az, float target_alt, bool is_live_stream) {
     // 1. Proteksi batas fisik altitude (0° s/d 90°):
     // Jika hilal berada di bawah ufuk, jangan biarkan motor menunduk menabrak meja! Kunci di posisi 0.0°
     float safe_alt = target_alt;
     if (safe_alt < 0.0)  safe_alt = 0.0;
     if (safe_alt > 90.0) safe_alt = 90.0; // Maksimal tegak lurus langit (Zenith)
 
-    // 2. Cegah pergerakan berulang jika target masih sama persis (IDEMPOTENT):
-    if (abs(target_az - last_target_az) < 0.1 && abs(safe_alt - last_target_alt) < 0.1) {
-        Serial.println("[Motor] Target sudah tercapai (posisi sama). Motor mengunci dan tidak bergerak.");
-        return;
-    }
-
-    // 3. Perhitungan Posisi Absolut Azimuth terhadap Titik Nol (0° = Utara):
+    // 2. Perhitungan Posisi Absolut Azimuth terhadap Titik Nol (0° = Utara):
     float norm_az = target_az;
     while (norm_az < 0.0)    norm_az += 360.0;
     while (norm_az >= 360.0) norm_az -= 360.0;
@@ -489,16 +527,30 @@ void setTargetPosition(float target_az, float target_alt) {
     long targetStepAzimuth  = (long)(azFromNorth * STEPS_PER_DEGREE) * (INVERT_AZ_MOTOR ? -1 : 1);
     long targetStepAltitude = (long)(safe_alt * STEPS_PER_DEGREE) * (INVERT_ALT_MOTOR ? -1 : 1);
 
-    Serial.println("\n>>> INSTRUKSI TARGET HILAL BARU DITERIMA <<<");
-    Serial.printf("  Target Azimuth  : %.2f° (Relatif Utara: %.2f°, Putar: %s, Step: %ld)\n", 
-                  norm_az, azFromNorth, (azFromNorth < 0 ? "KIRI (Barat)" : "KANAN (Timur)"), targetStepAzimuth);
-    Serial.printf("  Target Altitude : %.2f° (Safe Alt: %.2f°, Step: %ld)\n", target_alt, safe_alt, targetStepAltitude);
+    // 3. Cek apakah target step motor sama persis dengan target yang sedang dituju:
+    if (targetStepAzimuth == stepperAzimuth.targetPosition() && targetStepAltitude == stepperAltitude.targetPosition()) {
+        if (!is_live_stream) {
+            Serial.println("[Motor] Target sudah tercapai (posisi step sama). Motor mengunci dan tidak bergerak.");
+        }
+        return;
+    }
+
+    if (!is_live_stream) {
+        Serial.println("\n>>> INSTRUKSI TARGET HILAL BARU DITERIMA <<<");
+        Serial.printf("  Target Azimuth  : %.2f° (Relatif Utara: %.2f°, Putar: %s, Step: %ld)\n", 
+                      norm_az, azFromNorth, (azFromNorth < 0 ? "KIRI (Barat)" : "KANAN (Timur)"), targetStepAzimuth);
+        Serial.printf("  Target Altitude : %.2f° (Safe Alt: %.2f°, Step: %ld)\n", target_alt, safe_alt, targetStepAltitude);
+    } else {
+        // Pada live stream berkala, log ringkas agar tidak membebani Serial buffer
+        Serial.printf("[LIVE LOCK] Step Baru -> AzStep: %ld, AltStep: %ld (Az: %.2f°, Alt: %.2f°)\n",
+                      targetStepAzimuth, targetStepAltitude, norm_az, safe_alt);
+    }
 
     // Gerakkan motor secara ABSOLUT ke target langkah yang dihitung dari Titik Nol (Home)
     stepperAzimuth.moveTo(targetStepAzimuth);
     stepperAltitude.moveTo(targetStepAltitude);
 
-    // Simpan target aktif untuk mencegah pergerakan duplikat
+    // Simpan target aktif
     last_target_az  = target_az;
     last_target_alt = safe_alt;
 }
@@ -535,13 +587,15 @@ void sendTelemetry() {
     }
 #endif
 
-    // Kirim paket telemetri lengkap: Orientasi + Status Kalibrasi + Status GPS + Koordinat
-    char telemetry[340];
+    // Kirim paket telemetri lengkap: Orientasi + Status Kalibrasi + Status GPS + Koordinat + Status Tracking
+    char telemetry[380];
     sprintf(telemetry, 
-        "{\"type\":\"telemetry\",\"azimuth\":%.2f,\"altitude\":%.2f,\"cal_sys\":%d,\"cal_gyro\":%d,\"cal_accel\":%d,\"cal_mag\":%d,\"cal_locked\":%s,\"gps_valid\":%s,\"gps_lat\":%.6f,\"gps_lon\":%.6f,\"gps_sats\":%d}",
+        "{\"type\":\"telemetry\",\"azimuth\":%.2f,\"altitude\":%.2f,\"cal_sys\":%d,\"cal_gyro\":%d,\"cal_accel\":%d,\"cal_mag\":%d,\"cal_locked\":%s,\"gps_valid\":%s,\"gps_lat\":%.6f,\"gps_lon\":%.6f,\"gps_sats\":%d,\"is_tracking\":%s}",
         current_azimuth, current_altitude, system, gyro, accel, mag,
         calibration_loaded ? "true" : "false",
-        gps_valid ? "true" : "false", gps_lat, gps_lon, gps_sats
+        gps_valid ? "true" : "false", gps_lat, gps_lon, gps_sats,
+        is_live_tracking ? "true" : "false"
     );
     webSocket.sendTXT(telemetry);
+}
 }

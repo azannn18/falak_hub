@@ -131,10 +131,10 @@ export function initGlobe(container, cities, onCitySelect) {
     const EARTH_RADIUS = 6.371;
     const earthGeom = new THREE.SphereGeometry(EARTH_RADIUS, 72, 72);
 
-    // Textures (NASA/public-domain via Three.js repo CDN)
-    const earthDayTex     = loadTex('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg');
-    const earthNightTex   = loadTex('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png');
-    const earthNormalTex  = loadTex('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg');
+    // Textures (Local offline NASA/public-domain textures)
+    const earthDayTex     = loadTex('./assets/textures/earth_atmos_2048.jpg');
+    const earthNightTex   = loadTex('./assets/textures/earth_lights_2048.png');
+    const earthNormalTex  = loadTex('./assets/textures/earth_normal_2048.jpg');
 
     const earthMat = new THREE.MeshStandardMaterial({
         map:          earthDayTex,
@@ -268,8 +268,8 @@ export function initGlobe(container, cities, onCitySelect) {
     // ── Moon ─────────────────────────────────────────────────────
     const MOON_RADIUS  = 1.737;  // scaled similarly to earth
     const moonGeom     = new THREE.SphereGeometry(MOON_RADIUS, 48, 48);
-    const moonTex      = loadTex('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg');
-    const moonBumpTex  = loader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg'); // reuse as bump (real bump map same CDN)
+    const moonTex      = loadTex('./assets/textures/moon_1024.jpg');
+    const moonBumpTex  = loader.load('./assets/textures/moon_1024.jpg');
     const moonMat      = new THREE.MeshStandardMaterial({
         map:       moonTex,
         bumpMap:   moonBumpTex,
@@ -289,33 +289,13 @@ export function initGlobe(container, cities, onCitySelect) {
     const colorRed    = new THREE.Color(0xEF4444);
 
     function drawMabimsMap(geojson) {
-        if (!geojson?.features?.length) return;
-        if (mabimsInstance) { earthMesh.remove(mabimsInstance); mabimsInstance.geometry.dispose(); }
-
-        const count = geojson.features.length;
-        mabimsInstance = new THREE.InstancedMesh(dotGeom, new THREE.MeshBasicMaterial({ vertexColors: true }), count);
-        mabimsInstance.name = 'MabimsMap';
-
-        const dummy  = new THREE.Object3D();
-        const colors = new Float32Array(count * 3);
-        geojson.features.forEach((feat, i) => {
-            const [lon, lat] = feat.geometry.coordinates;
-            dummy.position.copy(latLonToVec3(lat, lon, EARTH_RADIUS + 0.06));
-            dummy.lookAt(dummy.position.clone().multiplyScalar(2));
-            dummy.updateMatrix();
-            mabimsInstance.setMatrixAt(i, dummy.matrix);
-
-            const col = feat.properties?.color === '#10B981' ? colorGreen
-                      : feat.properties?.color === '#3B82F6' ? colorBlue
-                      : colorRed;
-            colors[i*3]   = col.r;
-            colors[i*3+1] = col.g;
-            colors[i*3+2] = col.b;
-        });
-        mabimsInstance.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        mabimsInstance.instanceMatrix.needsUpdate = true;
-        earthMesh.add(mabimsInstance);
-        requestRender();
+        // Grid titik MABIMS pada globe dinonaktifkan agar permukaan Bumi tetap bersih.
+        if (mabimsInstance) {
+            earthMesh.remove(mabimsInstance);
+            mabimsInstance.material?.dispose();
+            mabimsInstance = null;
+            requestRender();
+        }
     }
 
     // ── Raycaster ─────────────────────────────────────────────────

@@ -2,11 +2,14 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
 from datetime import datetime, timezone
+import socket
+import subprocess
+import urllib.request
 import uvicorn
 import json
 from typing import List, Optional
@@ -14,6 +17,7 @@ from geopy.geocoders import Nominatim
 
 from astronomy.engine import FalakCalculator
 from ai.predictive_cache import PredictiveCache
+from paths import get_data_dir, get_frontend_dir, is_frozen
 
 app = FastAPI(title="HILTRON API", version="1.2.0")
 
@@ -108,25 +112,77 @@ def get_mabims_map(date: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"ERROR: {str(e)}")
 
+_offline_cities_cache = None
+
+
+def _load_offline_cities():
+    global _offline_cities_cache
+    if _offline_cities_cache is None:
+        cities_file = get_data_dir() / "cities_offline.json"
+        if cities_file.is_file():
+            try:
+                _offline_cities_cache = json.loads(cities_file.read_text(encoding="utf-8"))
+            except Exception:
+                _offline_cities_cache = []
+        else:
+            _offline_cities_cache = []
+    return _offline_cities_cache
+
+
+def _search_offline_cities(query: str):
+    q = query.strip().lower()
+    if not q:
+        return None
+    best = None
+    best_score = -1
+    for entry in _load_offline_cities():
+        name_l = entry["name"].lower()
+        aliases = [a.lower() for a in entry.get("aliases", [])]
+        if name_l == q or q in aliases:
+            score = 100
+        elif name_l.startswith(q) or any(a.startswith(q) for a in aliases):
+            score = 80
+        elif q in name_l or any(q in a for a in aliases):
+            score = 60
+        else:
+            continue
+        if score > best_score:
+            best_score = score
+            best = entry
+    if best:
+        return {
+            "name": best["name"],
+            "lat": best["lat"],
+            "lon": best["lon"],
+            "source": "offline",
+        }
+    return None
+
+
 @app.get("/api/search")
 def search_location(q: str):
     """
     Search for a city/location and get its coordinates.
+    Uses Nominatim when online, with seamless fallback to the bundled offline city database.
     """
     try:
-        from geopy.geocoders import Nominatim
         geolocator = Nominatim(user_agent="HILTRON_App")
-        location = geolocator.geocode(q)
+        location = geolocator.geocode(q, timeout=3)
         if location:
             return {
                 "name": location.address,
                 "lat": location.latitude,
-                "lon": location.longitude
+                "lon": location.longitude,
+                "source": "nominatim",
             }
-        else:
-            raise HTTPException(status_code=404, detail="Location not found")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        pass
+
+    offline_match = _search_offline_cities(q)
+    if offline_match:
+        return offline_match
+
+    raise HTTPException(status_code=404, detail="Location not found")
 
 class ConnectionManager:
     def __init__(self):
@@ -167,6 +223,136 @@ esp32_telemetry = {
     "is_tracking": False,
     "last_update": None
 }
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok", "version": "1.2.0"}
+
+
+def _detect_lan_ip() -> str:
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect(("10.255.255.255", 1))
+            return sock.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+
+
+@app.get("/api/system-info")
+def get_system_info(request: Request):
+    desktop_mode = bool(getattr(app.state, "desktop_mode", False))
+    port = int(getattr(app.state, "hiltron_port", request.url.port or 8000))
+    local_ip = _detect_lan_ip()
+    return {
+        "desktop_mode": desktop_mode,
+        "local_ip": local_ip,
+        "port": port,
+        "ws_url": f"ws://{local_ip}:{port}/ws/esp32",
+    }
+
+
+def _get_windows_location() -> Optional[dict]:
+    """Try Windows native GeoCoordinateWatcher without flashing a console window."""
+    if os.name != "nt":
+        return None
+    ps_script = (
+        "Add-Type -AssemblyName System.Device; "
+        "$w = New-Object System.Device.Location.GeoCoordinateWatcher([System.Device.Location.GeoPositionAccuracy]::Default); "
+        "$null = $w.TryStart($false, [TimeSpan]::FromMilliseconds(2500)); "
+        "if ($w.Permission -ne 'Denied') { "
+        "  $deadline = (Get-Date).AddMilliseconds(2500); "
+        "  while ($w.Position.Location.IsUnknown -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 150 } "
+        "} "
+        "$loc = $w.Position.Location; "
+        "if (-not $loc.IsUnknown) { "
+        "  $ci = [System.Globalization.CultureInfo]::InvariantCulture; "
+        "  Write-Output ($loc.Latitude.ToString($ci) + ',' + $loc.Longitude.ToString($ci) + ',' + $loc.HorizontalAccuracy.ToString($ci)) "
+        "} "
+        "$w.Dispose()"
+    )
+    try:
+        creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        res = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", ps_script],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            creationflags=creation_flags,
+        )
+        line = (res.stdout or "").strip().splitlines()
+        if not line:
+            return None
+        parts = line[-1].split(",")
+        if len(parts) < 2:
+            return None
+        lat = float(parts[0])
+        lon = float(parts[1])
+        acc = float(parts[2]) if len(parts) > 2 and parts[2] != "NaN" else 500.0
+        return {
+            "lat": lat,
+            "lon": lon,
+            "accuracy_m": round(acc),
+            "name": None,
+            "source": "windows_location",
+        }
+    except Exception:
+        return None
+
+
+def _get_ip_location() -> Optional[dict]:
+    """Fallback city-level location detection via public IP geolocation."""
+    providers = ("https://ipwho.is/", "https://ipinfo.io/json")
+    for url in providers:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "HILTRON/1.2"})
+            with urllib.request.urlopen(req, timeout=4) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            if "ipwho.is" in url:
+                if not data.get("success", False):
+                    continue
+                lat = float(data["latitude"])
+                lon = float(data["longitude"])
+                city = data.get("city")
+                country = data.get("country")
+            else:
+                loc = data.get("loc", "")
+                if "," not in loc:
+                    continue
+                lat_s, lon_s = loc.split(",", 1)
+                lat, lon = float(lat_s), float(lon_s)
+                city = data.get("city")
+                country = data.get("country")
+            name = ", ".join(p for p in (city, country) if p) or None
+            return {
+                "lat": lat,
+                "lon": lon,
+                "accuracy_m": 5000,
+                "name": name,
+                "source": "ip_geolocation",
+            }
+        except Exception:
+            continue
+    return None
+
+
+@app.get("/api/device-location")
+def get_device_location():
+    """
+    Desktop location fallback when WebView2 navigator.geolocation is blocked or unavailable.
+    Tries Windows native GeoCoordinateWatcher first, then IP geolocation.
+    """
+    loc = _get_windows_location()
+    if loc:
+        return loc
+
+    loc = _get_ip_location()
+    if loc:
+        return loc
+
+    raise HTTPException(
+        status_code=503,
+        detail="Lokasi perangkat tidak tersedia (izin Lokasi Windows nonaktif dan tidak ada koneksi internet).",
+    )
 
 @app.get("/api/telemetry")
 def get_telemetry():
@@ -347,12 +533,22 @@ class SafeStaticFiles(StaticFiles):
             return
         await super().__call__(scope, receive, send)
 
-# Serve frontend statis untuk penggunaan lokal (di luar Vercel)
-import os
-frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        req_path = scope.get("path", "")
+        if req_path == "/" or req_path.endswith((".html", ".js", ".css")):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+        return response
+
+# Serve frontend statis untuk penggunaan lokal & desktop (di luar Vercel)
+frontend_dir = str(get_frontend_dir())
 if os.path.exists(frontend_dir):
     app.mount("/", SafeStaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=True)
+    if is_frozen():
+        uvicorn.run(app, host="0.0.0.0", port=port, reload=False)
+    else:
+        uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=True)
