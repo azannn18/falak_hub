@@ -1,0 +1,29 @@
+# Desktop Build Artifacts & Binaries
+cloudflared.exe
+*.exe
+*.zip
+*.iss
+*.spec
+desktop_app.py
+requirements-desktop.txt
+build/
+dist/
+
+# Embedded Firmware
+firmware/
+
+# Virtual Environments & Caches
+.venv/
+venv/
+backend/venv/
+__pycache__/
+*.pyc
+.vscode/
+.git/
+.env*
+
+# Documentation & Tests
+test_*.py
+recover.py
+render.yaml
+*.md
