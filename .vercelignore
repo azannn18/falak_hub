@@ -1,6 +1,7 @@
 # Desktop Build Artifacts & Binaries
 cloudflared.exe
-*.exe
+/*.exe
+!frontend/download/**
 *.zip
 *.iss
 *.spec
@@ -27,3 +28,4 @@ test_*.py
 recover.py
 render.yaml
 *.md
+
