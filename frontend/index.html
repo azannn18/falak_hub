@@ -62,7 +62,26 @@
                         <span>Buka Observatorium</span>
                         <i class="fas fa-arrow-right" style="font-size:0.75rem;"></i>
                     </a>
+                    <button class="nav-toggle-btn" id="nav-toggle" aria-label="Menu Navigasi">
+                        <i class="fas fa-bars"></i>
+                    </button>
                 </div>
+            </div>
+
+            <!-- Mobile Navigation Drawer -->
+            <div class="mobile-nav" id="mobile-nav">
+                <ul class="mobile-nav-links">
+                    <li><a href="#features" class="mobile-nav-link"><i class="fas fa-layer-group" style="width:20px;color:var(--c-emerald);"></i> Fitur Utama</a></li>
+                    <li><a href="#tracker" class="mobile-nav-link"><i class="fas fa-robot" style="width:20px;color:var(--c-cyan);"></i> Hardware IoT</a></li>
+                    <li><a href="#platforms" class="mobile-nav-link"><i class="fas fa-laptop-code" style="width:20px;color:var(--c-blue);"></i> Platform</a></li>
+                    <li><a href="#download" class="mobile-nav-link"><i class="fas fa-download" style="width:20px;color:var(--c-amber);"></i> Unduh Desktop App</a></li>
+                    <li style="margin-top:6px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
+                        <a href="app.html" class="btn btn-primary" style="width:100%;justify-content:center;">
+                            <i class="fas fa-compass"></i>
+                            <span>Buka Observatorium 3D</span>
+                        </a>
+                    </li>
+                </ul>
             </div>
         </header>
 
@@ -329,22 +348,22 @@
                     </div>
 
                     <!-- Flow Diagram -->
-                    <div style="margin-top:36px;padding:24px;border-radius:var(--radius-md);background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-around;flex-wrap:wrap;gap:20px;text-align:center;">
+                    <div class="flow-diagram-box" style="margin-top:36px;padding:24px;border-radius:var(--radius-md);background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-around;flex-wrap:wrap;gap:20px;text-align:center;">
                         <div>
                             <div style="font-weight:700;color:var(--c-emerald);"><i class="fas fa-satellite"></i> NASA JPL DE421</div>
                             <div style="font-size:0.8rem;color:var(--text-dim);">Ephemeris Skyfield</div>
                         </div>
-                        <i class="fas fa-arrow-right" style="color:var(--text-dim);"></i>
+                        <i class="fas fa-arrow-right flow-arrow" style="color:var(--text-dim);"></i>
                         <div>
                             <div style="font-weight:700;color:var(--c-cyan);"><i class="fas fa-server"></i> FastAPI Backend</div>
                             <div style="font-size:0.8rem;color:var(--text-dim);">Koordinat Alt/Az & MABIMS</div>
                         </div>
-                        <i class="fas fa-arrow-right" style="color:var(--text-dim);"></i>
+                        <i class="fas fa-arrow-right flow-arrow" style="color:var(--text-dim);"></i>
                         <div>
                             <div style="font-weight:700;color:var(--c-blue);"><i class="fas fa-network-wired"></i> MQTT / WebSocket</div>
                             <div style="font-size:0.8rem;color:var(--text-dim);">Kanal Telemetri Bi-directional</div>
                         </div>
-                        <i class="fas fa-arrow-right" style="color:var(--text-dim);"></i>
+                        <i class="fas fa-arrow-right flow-arrow" style="color:var(--text-dim);"></i>
                         <div>
                             <div style="font-weight:700;color:var(--c-emerald-light);"><i class="fas fa-crosshairs"></i> ESP32 Tracker</div>
                             <div style="font-size:0.8rem;color:var(--text-dim);">Live Lock Motor Stepper</div>
@@ -627,6 +646,44 @@
                     dateDisplay.textContent = '1 Ramadhan 1447 H';
                 }
             }
+        })();
+
+        // Mobile Navbar Toggle Handler
+        (function() {
+            const toggleBtn = document.getElementById('nav-toggle');
+            const mobileNav = document.getElementById('mobile-nav');
+            if (!toggleBtn || !mobileNav) return;
+
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mobileNav.classList.toggle('open');
+                const icon = toggleBtn.querySelector('i');
+                if (icon) {
+                    if (mobileNav.classList.contains('open')) {
+                        icon.className = 'fas fa-times';
+                    } else {
+                        icon.className = 'fas fa-bars';
+                    }
+                }
+            });
+
+            // Close mobile menu when clicking any nav link
+            mobileNav.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileNav.classList.remove('open');
+                    const icon = toggleBtn.querySelector('i');
+                    if (icon) icon.className = 'fas fa-bars';
+                });
+            });
+
+            // Close when clicking outside
+            document.addEventListener('click', (e) => {
+                if (mobileNav.classList.contains('open') && !mobileNav.contains(e.target) && !toggleBtn.contains(e.target)) {
+                    mobileNav.classList.remove('open');
+                    const icon = toggleBtn.querySelector('i');
+                    if (icon) icon.className = 'fas fa-bars';
+                }
+            });
         })();
     </script>
 </body>

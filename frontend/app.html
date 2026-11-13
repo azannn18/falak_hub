@@ -82,7 +82,7 @@
                     </div>
                     <div>
                         <div style="font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#E2E8F0;">HILTRON</div>
-                        <div
+                        <div class="header-subtitle"
                             style="font-size:10px;letter-spacing:0.12em;color:rgba(226,232,240,0.4);font-weight:500;text-transform:uppercase;">
                             Islamic Observatory · OASE III 2026</div>
                     </div>
@@ -118,6 +118,12 @@
 
         <!-- ════════════════════════════════════════════ LEFT PANEL ═══ -->
         <aside id="left-panel" class="glass-panel rounded-2xl overflow-hidden flex flex-col">
+
+            <!-- Mobile Drawer Header -->
+            <div class="drawer-header-mobile">
+                <div class="drawer-title-mobile"><i class="fas fa-sliders-h" style="color:#10B981;"></i> Panel Observasi</div>
+                <button class="btn-close-drawer" id="btn-close-left" aria-label="Tutup Panel"><i class="fas fa-times"></i></button>
+            </div>
 
             <!-- Location Selector -->
             <div style="padding:16px;border-bottom:1px solid var(--c-border);position:relative;">
@@ -357,7 +363,7 @@
             <button id="btn-toggle-right" class="fab-btn fab-right"><i class="fas fa-moon"></i></button>
 
             <!-- Bottom of center: subtle label -->
-            <div class="glass-panel-sm pe-auto"
+            <div id="center-bottom-hud" class="glass-panel-sm pe-auto"
                 style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); padding:8px 20px;display:inline-flex;align-items:center;gap:10px;">
                 <i class="fas fa-circle" style="font-size:7px;color:#10B981;animation:pulse-dot 2s infinite;"></i>
                 <span style="font-size:11px;color:rgba(226,232,240,0.6);letter-spacing:0.08em;white-space:nowrap;">KLIK
@@ -367,6 +373,12 @@
 
         <!-- ═══════════════════════════════════════════ RIGHT PANEL ═══ -->
         <aside id="right-panel">
+
+            <!-- Mobile Drawer Header -->
+            <div class="drawer-header-mobile">
+                <div class="drawer-title-mobile"><i class="fas fa-moon" style="color:#3B82F6;"></i> Parameter Hilal & IoT</div>
+                <button class="btn-close-drawer" id="btn-close-right" aria-label="Tutup Panel"><i class="fas fa-times"></i></button>
+            </div>
 
             <!-- Date Picker -->
             <div class="glass-panel" style="padding:16px;border-radius:16px;">

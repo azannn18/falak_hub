@@ -553,6 +553,8 @@ function setupUI() {
     // Mobile UI Drawers Toggle
     const btnLeft = $('btn-toggle-left');
     const btnRight = $('btn-toggle-right');
+    const btnCloseLeft = $('btn-close-left');
+    const btnCloseRight = $('btn-close-right');
     const panelLeft = $('left-panel');
     const panelRight = $('right-panel');
     const backdrop = $('mobile-backdrop');
@@ -576,6 +578,12 @@ function setupUI() {
             panelRight.classList.add('open');
             backdrop.classList.add('open');
         });
+    }
+    if (btnCloseLeft) {
+        btnCloseLeft.addEventListener('click', closeDrawers);
+    }
+    if (btnCloseRight) {
+        btnCloseRight.addEventListener('click', closeDrawers);
     }
     if (backdrop) {
         backdrop.addEventListener('click', closeDrawers);
