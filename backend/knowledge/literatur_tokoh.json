@@ -1,0 +1,79 @@
+[
+  {
+    "id": "tokoh_01_kh_turaichan",
+    "topik": "KH Turaichan Adjhuri dan Hisab Kudus",
+    "kata_kunci": [
+      "kh turaichan",
+      "turaikhan",
+      "turaichan adjhuri",
+      "falak kudus",
+      "menara kudus",
+      "tokoh falak"
+    ],
+    "ringkasan_singkat": "KH Turaichan Adjhuri (1915–1999) adalah salah satu ulama falak paling berpengaruh di Indonesia dari Kudus, Jawa Tengah. Beliau dikenal sangat teguh mempertahankan hisab hakiki tahqiqi dan menyusun penanggalan legendaris Menara Kudus.",
+    "penjelasan_lengkap": "Mbah Turaichan Adjhuri Asy-Syarafi menguasai berbagai sistem hisab klasik dan kontemporer. Kitab-kitab karangannya banyak diajarkan di pesantren nusantara, di antaranya Irsyadul Murid, Sirajul Awam, dan Badi'atul Mitsal. Beliau memadukan hisab yang sangat teliti dengan keteguhan prinsip fikih, menjadi rujukan utama hisab para kiai di Jawa selama beberapa dekade.",
+    "sumber": "Biografi Ulama Falak Nusantara & Sejarah Falak Menara Kudus",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "tokoh_02_kh_zubair_umar",
+    "topik": "KH Zubair Umar Al-Jailani dan Kitab Al-Khulashah Al-Wafiyah",
+    "kata_kunci": [
+      "kh zubair umar",
+      "al-khulashah al-wafiyah",
+      "khulashah wafiyah",
+      "zubair umar salatiga",
+      "kitab falak"
+    ],
+    "ringkasan_singkat": "KH Zubair Umar Al-Jailani dari Salatiga adalah pengarang kitab agung 'Al-Khulashah Al-Wafiyah fi Al-Falak bi Jadawil Al-Lugharitmiyyah', kitab hisab falak modern berbasis tabel logaritma yang menjadi kurikulum utama pesantren di Indonesia.",
+    "penjelasan_lengkap": "Kitab Al-Khulashah Al-Wafiyah yang disusun KH Zubair Umar pada pertengahan abad ke-20 merupakan mahakarya hisab hakiki tahqiqi. Kitab ini mengintegrasikan kaidah hisab klasik dengan metode logaritma modern untuk menghitung posisi matahari, bulan, waktu salat, gerhana, dan arah kiblat dengan presisi tinggi tanpa memerlukan kalkulator elektronik pada masanya.",
+    "sumber": "Kitab Al-Khulashah Al-Wafiyah & Khazanah Falak Pesantren",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "tokoh_03_kh_manshur_batawi",
+    "topik": "KH Muhammad Manshur dan Kitab Sullamun Nayyirain",
+    "kata_kunci": [
+      "sullamun nayyirain",
+      "kh manshur",
+      "guru manshur",
+      "manshur jembatan lima",
+      "hisab taqribi",
+      "kitab sullam"
+    ],
+    "ringkasan_singkat": "KH Muhammad Manshur bin Abdul Hamid bin Damiri (Guru Manshur Jembatan Lima, Jakarta) menyusun kitab 'Sullamun Nayyirain' pada tahun 1925. Kitab ini merupakan kitab hisab taqribi paling populer dan legendaris di kalangan santri dan masyarakat Betawi.",
+    "penjelasan_lengkap": "Kitab Sullamun Nayyirain menggunakan metode hisab taqribi (perhitungan pendekatan) yang diturunkan dari tabel Zaij Ulugh Beg dan Al-Battani. Keistimewaan kitab ini terletak pada penyajian tabel-tabel angka yang sederhana, sehingga santri dapat menghitung ijtimak dan posisi hilal hanya menggunakan penjumlahan dan pengurangan dasar. Meskipun bersifat taqribi (memiliki deviasi jika dibanding ephemeris modern), kitab ini memiliki jasa sejarah luar biasa dalam literasi falak rakyat nusantara.",
+    "sumber": "Kitab Sullamun Nayyirain & Sejarah Falak Jakarta",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "tokoh_04_saadoeddin_djambek",
+    "topik": "Saadoe'ddin Djambek (Pelopor Hisab Kontemporer)",
+    "kata_kunci": [
+      "saadoeddin djambek",
+      "djambek",
+      "hisab kontemporer",
+      "spherical trigonometry",
+      "tokoh hisab"
+    ],
+    "ringkasan_singkat": "Saadoe'ddin Djambek (1911–1977) adalah ulama, pendidik, dan pakar falak asal Minangkabau yang mempelopori modernisasi ilmu falak di Indonesia dengan mengadopsi kalkulus dan trigonometri bola modern.",
+    "penjelasan_lengkap": "Saadoe'ddin Djambek menulis banyak buku monumental seperti 'Waktu dan Jadwal', 'Arah Kiblat', dan 'Perbandingan Tarikh'. Beliau mentransformasi pengajaran hisab di universitas dan kementerian dari cara tradisional menjadi berbasis rumus matematika bola baku yang presisi, meletakkan fondasi hisab ephemeris modern yang digunakan Badan Hisab Rukyat Kemenag RI.",
+    "sumber": "Buku-Buku Karya Saadoe'ddin Djambek & Ensiklopedi Islam",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "tokoh_05_kh_ahmad_dahlan",
+    "topik": "KH Ahmad Dahlan dan Pelurusan Arah Kiblat",
+    "kata_kunci": [
+      "kh ahmad dahlan",
+      "arah kiblat dahlan",
+      "masjid gedhe kauman",
+      "pelurusan kiblat",
+      "muhammadiyah falak"
+    ],
+    "ringkasan_singkat": "KH Ahmad Dahlan, pendiri Muhammadiyah, adalah tokoh pelopor pembaruan falak yang membetulkan arah kiblat Masjid Gedhe Kauman Yogyakarta dan masjid-masjid di Jawa pada akhir abad ke-19 menggunakan perhitungan matematis kompas dan istiwa.",
+    "penjelasan_lengkap": "Sekembalinya dari belajar di Mekkah di bawah bimbingan Syaikh Ahmad Khatib Al-Minangkabawi, KH Ahmad Dahlan mendapati bahwa arah kiblat banyak masjid di tanah Jawa menghadap lurus ke barat (270 derajat), padahal posisi Mekkah dari Jawa adalah barat-laut (sekitar 295 derajat). Dengan ilmu ukur falak dan kompas, beliau melakukan koreksi saf salat. Peristiwa ini menjadi tonggak sejarah penting integrasi sains falak dalam amalan ibadah di Nusantara.",
+    "sumber": "Sejarah Hidup KH Ahmad Dahlan & Perjalanan Arah Kiblat di Jawa",
+    "tingkat_keyakinan": "tinggi"
+  }
+]

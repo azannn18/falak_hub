@@ -10,5 +10,7 @@ dist/
 cloudflared.exe
 /*.exe
 !frontend/download/**
+backend/ai/tts/cache/
+backend/logs/
 
 

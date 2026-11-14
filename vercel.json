@@ -4,7 +4,13 @@
       "src": "backend/main.py",
       "use": "@vercel/python",
       "config": {
-        "includeFiles": "backend/*.bsp"
+        "includeFiles": [
+          "backend/*.bsp",
+          "backend/knowledge/**",
+          "backend/config/**",
+          "backend/ai/*.json",
+          "backend/data/**"
+        ]
       }
     },
     {

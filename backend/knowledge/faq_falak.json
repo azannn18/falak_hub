@@ -1,0 +1,61 @@
+[
+  {
+    "id": "faq_01_beda_awal_ramadhan",
+    "topik": "Mengapa Awal Ramadhan atau Idul Fitri Bisa Berbeda di Indonesia?",
+    "kata_kunci": [
+      "kenapa beda ramadhan",
+      "perbedaan idul fitri",
+      "mengapa awal puasa beda",
+      "muhammadiyah nu beda",
+      "sidang isbat beda"
+    ],
+    "ringkasan_singkat": "Perbedaan awal puasa atau lebaran terjadi karena perbedaan kriteria dan metode: Muhammadiyah menggunakan Wujudul Hilal (asalkan hilal sudah di atas ufuk), sedangkan Pemerintah (Kemenag) dan NU menggunakan Imkanur Rukyat MABIMS (tinggi minimal 3 derajat dan elongasi 6,4 derajat) serta verifikasi rukyat faktual.",
+    "penjelasan_lengkap": "Ketika posisi hilal berada di antara 0 derajat sampai kurang dari 3 derajat, atau elongasinya belum mencapai 6,4 derajat, perbedaan penetapan hampir pasti terjadi. Menurut kriteria Wujudul Hilal, posisi tersebut sudah sah masuk bulan baru karena hilal sudah di atas ufuk (> 0°). Namun menurut kriteria Imkanur Rukyat MABIMS dan rukyatul hilal bil fi'li NU/Kemenag, hilal setinggi itu belum memenuhi batas minimal kemungkinan terlihat secara fisik, sehingga bulan berjalan digenapkan (istikmal) menjadi 30 hari. Perbedaan ini adalah ijtihad ilmiah yang sah dan harus disikapi dengan saling menghormati.",
+    "sumber": "Panduan Harmonisasi Awal Bulan Kamariyah Kemenag RI",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "faq_02_apa_itu_hilal",
+    "topik": "Apa Itu Hilal Secara Astronomis dan Syar'i?",
+    "kata_kunci": [
+      "apa itu hilal",
+      "pengertian hilal",
+      "definisi hilal",
+      "bentuk hilal",
+      "hilal adalah"
+    ],
+    "ringkasan_singkat": "Hilal adalah penampakan bulan sabit sangat tipis yang terlihat sesaat setelah matahari terbenam pada hari ke-29 bulan Hijriah di ufuk barat, menandai pergantian menuju bulan baru dalam kalender Islam.",
+    "penjelasan_lengkap": "Secara bahasa, hilal berasal dari kata ahalla yang berarti tampak atau bersorak menyambutnya. Secara astronomis, hilal adalah bulan sabit muda pertama (crescent) yang memantulkan sinar matahari setelah terjadinya konjungsi (ijtimak). Hilal memiliki iluminasi yang sangat kecil (biasanya kurang dari 1-2 persen luas piringan bulan) dan hanya bertahan di atas ufuk selama beberapa menit hingga kurang dari satu jam sebelum tenggelam mengikuti matahari.",
+    "sumber": "Leksikon Astronomi Islam & Fathul Wahhab",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "faq_03_kenapa_hilal_tidak_terlihat",
+    "topik": "Mengapa Hilal Tidak Terlihat Meski Sudah Terjadi Ijtimak?",
+    "kata_kunci": [
+      "hilal tidak terlihat",
+      "kenapa hilal tak nampak",
+      "hilal gagal rukyat",
+      "faktor kegagalan hilal",
+      "sudah ijtimak hilal tidak ada"
+    ],
+    "ringkasan_singkat": "Meskipun sudah ijtimak, hilal bisa tidak terlihat karena ketinggiannya masih terlalu rendah sehingga terkubur hamburan cahaya senja, kontras cahayanya terlalu redup, umur bulan masih terlalu muda, atau tertutup kabut dan awan tebal di ufuk barat.",
+    "penjelasan_lengkap": "Ada dua faktor utama: 1) Faktor Astronomis (Limit Visibilitas): Setelah ijtimak, bulan butuh waktu berjam-jam untuk bergeser cukup jauh dari matahari agar ketebalan sabit dan kontras cahayanya melampaui kecerlangan langit senja (sky brightness). Jika elongasi kurang dari 6,4° atau tinggi kurang dari 3°, mata dan sensor kamera optik akan silau oleh hamburan cahaya senja (Danjon limit). 2) Faktor Atmosferis (Meteorologi): Ufuk barat Indonesia sering tertutup uap air laut, polusi debu, atau mendung awan cumulonimbus tebal saat senja.",
+    "sumber": "Riset Visibilitas Hilal BMKG & BRIN",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "faq_04_beda_sabang_merauke",
+    "topik": "Mengapa Ketinggian Hilal Berbeda Antara Sabang dan Merauke?",
+    "kata_kunci": [
+      "beda tinggi hilal",
+      "sabang merauke hilal",
+      "tinggi hilal indonesia barat timur",
+      "perbedaan ufuk nusantara"
+    ],
+    "ringkasan_singkat": "Wilayah Indonesia membentang sekitar 46 derajat bujur dengan selisih waktu terbenam matahari hampir 3 jam antara Merauke dan Sabang. Karena bulan terus bergerak menjauhi matahari dari timur ke barat, saat matahari terbenam di Sabang (Aceh), posisi hilal selalu lebih tinggi dan umurnya lebih tua daripada di Merauke.",
+    "penjelasan_lengkap": "Matahari terbenam lebih awal di kawasan Indonesia Timur (Merauke/WIT) dan terbenam paling akhir di Indonesia Barat (Sabang/WIB). Dalam selang waktu hampir 3 jam tersebut, bulan terus bergerak dalam orbitnya mengelilingi bumi ke arah timur menjauhi matahari. Akibatnya, pada hari yang sama saat matahari terbenam di Sabang, sudut elongasi dan ketinggian hilal mar'i sudah bertambah lebih tinggi sekitar 1,5 hingga 2 derajat dibanding saat matahari terbenam di Merauke.",
+    "sumber": "Peta Visibilitas Hilal Nasional Kemenag RI",
+    "tingkat_keyakinan": "tinggi"
+  }
+]

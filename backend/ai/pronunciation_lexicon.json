@@ -1,0 +1,297 @@
+{
+  "version": "1.0",
+  "description": "Kamus penggantian ejaan dan fonetik lisan agar Text-to-Speech (TTS) melafalkan istilah falak, akronim teknis, dan hardware secara luwes dan akurat.",
+  "entries": [
+    {
+      "pattern": "\\bESP32\\b",
+      "spoken": "E-S-P tiga puluh dua",
+      "category": "hardware"
+    },
+    {
+      "pattern": "\\bBNO055\\b",
+      "spoken": "B-N-O nol lima lima",
+      "category": "hardware"
+    },
+    {
+      "pattern": "\\bNEO-6M\\b",
+      "spoken": "Neo enam M",
+      "category": "hardware"
+    },
+    {
+      "pattern": "\\bNEMA\\s*17\\b",
+      "spoken": "Nema tujuh belas",
+      "category": "hardware"
+    },
+    {
+      "pattern": "\\bHILTRON\\b",
+      "spoken": "Hiltron",
+      "category": "hardware"
+    },
+    {
+      "pattern": "\\bIoT\\b",
+      "spoken": "I-o-T",
+      "category": "hardware"
+    },
+    {
+      "pattern": "\\bIMU\\b",
+      "spoken": "I-M-U",
+      "category": "hardware"
+    },
+    {
+      "pattern": "\\bGPS\\b",
+      "spoken": "G-P-S",
+      "category": "hardware"
+    },
+    {
+      "pattern": "\\bMABIMS\\b",
+      "spoken": "Mabims",
+      "category": "falak_lembaga"
+    },
+    {
+      "pattern": "\\bPBNU\\b",
+      "spoken": "P-B-N-U",
+      "category": "falak_lembaga"
+    },
+    {
+      "pattern": "\\bLF\\s*PBNU\\b",
+      "spoken": "Lembaga Falakiyah P-B-N-U",
+      "category": "falak_lembaga"
+    },
+    {
+      "pattern": "\\bKemenag(\\s*RI)?\\b",
+      "spoken": "Kemenag R-I",
+      "category": "falak_lembaga"
+    },
+    {
+      "pattern": "\\bMWL\\b",
+      "spoken": "M-W-L",
+      "category": "falak_lembaga"
+    },
+    {
+      "pattern": "\\bNASA\\b",
+      "spoken": "Nasa",
+      "category": "astronomi"
+    },
+    {
+      "pattern": "\\bJPL\\b",
+      "spoken": "J-P-L",
+      "category": "astronomi"
+    },
+    {
+      "pattern": "\\bDE421\\b",
+      "spoken": "D-E empat ratus dua puluh satu",
+      "category": "astronomi"
+    },
+    {
+      "pattern": "\\bWIB\\b",
+      "spoken": "W-I-B",
+      "category": "waktu"
+    },
+    {
+      "pattern": "\\bWITA\\b",
+      "spoken": "Wita",
+      "category": "waktu"
+    },
+    {
+      "pattern": "\\bWIT\\b",
+      "spoken": "W-I-T",
+      "category": "waktu"
+    },
+    {
+      "pattern": "\\bUTC\\b",
+      "spoken": "U-T-C",
+      "category": "waktu"
+    },
+    {
+      "pattern": "\\bGMST\\b",
+      "spoken": "G-M-S-T",
+      "category": "waktu"
+    },
+    {
+      "pattern": "\\bazimuth\\b",
+      "spoken": "azimut",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bAzimuth\\b",
+      "spoken": "Azimut",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\brukyat\\b",
+      "spoken": "ru'yat",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bRukyat\\b",
+      "spoken": "Ru'yat",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bru'yatul\\s*hilal\\b",
+      "spoken": "rukyatul hilal",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bimkanur\\s*rukyat\\b",
+      "spoken": "imkanur ru'yat",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bImkanur\\s*Rukyat\\b",
+      "spoken": "Imkanur Ru'yat",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bwujudul\\s*hilal\\b",
+      "spoken": "wujudul hilal",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bWujudul\\s*Hilal\\b",
+      "spoken": "Wujudul Hilal",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bijtimak\\b",
+      "spoken": "ijtimak",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bijtima'\\b",
+      "spoken": "ijtimak",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bihtiyat\\b",
+      "spoken": "ihtiyat",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bikhtiyat\\b",
+      "spoken": "ihtiyat",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bmar'i\\b",
+      "spoken": "mar-i",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bghurub\\b",
+      "spoken": "ghurub",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bistiwa'ain\\b",
+      "spoken": "istiwa-ain",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bistiwa'\\b",
+      "spoken": "istiwa",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\brashdul\\s*kiblat\\b",
+      "spoken": "rasydul kiblat",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bRashdul\\s*Kiblat\\b",
+      "spoken": "Rasydul Kiblat",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bastrolabe\\b",
+      "spoken": "astrolab",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bAstrolabe\\b",
+      "spoken": "Astrolab",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\btoposentris\\b",
+      "spoken": "toposentris",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bgeosentris\\b",
+      "spoken": "geosentris",
+      "category": "falak_istilah"
+    },
+    {
+      "pattern": "\\bSullamun\\s*Nayyirain\\b",
+      "spoken": "Sullamun Nayyirain",
+      "category": "falak_kitab"
+    },
+    {
+      "pattern": "\\bAl-Khulashah\\s*Al-Wafiyah\\b",
+      "spoken": "Al-Khulashah Al-Wafiyah",
+      "category": "falak_kitab"
+    },
+    {
+      "pattern": "\\bBadi'ah\\s*al-Mitsal\\b",
+      "spoken": "Badi'ah al-Mitsal",
+      "category": "falak_kitab"
+    },
+    {
+      "pattern": "\\bFathul\\s*Rauf\\b",
+      "spoken": "Fathur Rauf",
+      "category": "falak_kitab"
+    },
+    {
+      "pattern": "\\bRamadhan\\b",
+      "spoken": "Ramadan",
+      "category": "hijriah"
+    },
+    {
+      "pattern": "\\bramadhan\\b",
+      "spoken": "ramadan",
+      "category": "hijriah"
+    },
+    {
+      "pattern": "\\bDzulhijjah\\b",
+      "spoken": "Zulhijjah",
+      "category": "hijriah"
+    },
+    {
+      "pattern": "\\bdzulhijjah\\b",
+      "spoken": "zulhijjah",
+      "category": "hijriah"
+    },
+    {
+      "pattern": "\\bDzulqa'dah\\b",
+      "spoken": "Zulkaidah",
+      "category": "hijriah"
+    },
+    {
+      "pattern": "\\bUmm\\s*al-Qura\\b",
+      "spoken": "Ummul Qura",
+      "category": "hijriah"
+    },
+    {
+      "pattern": "\\bKa'bah\\b",
+      "spoken": "Ka'bah",
+      "category": "kiblat"
+    },
+    {
+      "pattern": "\\bkm\\b",
+      "spoken": "kilometer",
+      "category": "satuan"
+    },
+    {
+      "pattern": "\\bkm/jam\\b",
+      "spoken": "kilometer per jam",
+      "category": "satuan"
+    },
+    {
+      "pattern": "\\bms\\b",
+      "spoken": "milidetik",
+      "category": "satuan"
+    }
+  ]
+}
+

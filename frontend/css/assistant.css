@@ -1,0 +1,618 @@
+/* ============================================================
+   HILTRON — Falak Voice AI Assistant Stylesheet (ChatGPT Voice Style)
+   Theme: Obsidian Cosmic Space with Emerald (#10B981) & Cyan (#06B6D4)
+   ============================================================ */
+
+:root {
+    --bg-dark: #060911;
+    --bg-surface: rgba(15, 23, 42, 0.7);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-glow: rgba(16, 185, 129, 0.35);
+    --c-emerald: #10B981;
+    --c-emerald-glow: rgba(16, 185, 129, 0.45);
+    --c-cyan: #06B6D4;
+    --c-cyan-glow: rgba(6, 182, 212, 0.4);
+    --c-amber: #F59E0B;
+    --c-purple: #8B5CF6;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Cosmic Background */
+.assistant-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.04) 35%, #060911 75%);
+    pointer-events: none;
+}
+
+/* Main Layout Wrapper */
+.assistant-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* ═══════════════════════════════════════════ TOP HUD NAVBAR ═══ */
+.assistant-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    background: linear-gradient(180deg, rgba(6, 9, 17, 0.95) 0%, rgba(6, 9, 17, 0) 100%);
+    pointer-events: auto;
+    z-index: 30;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: 9999px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(10px);
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(-2px);
+}
+
+.assistant-identity {
+    display: flex;
+    flex-direction: column;
+}
+
+.assistant-name {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.assistant-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid var(--c-emerald);
+    color: var(--c-emerald);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.assistant-role {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.voice-selector-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: 9999px;
+    backdrop-filter: blur(10px);
+    transition: all 0.25s ease;
+}
+
+.voice-selector-wrapper:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.voice-select {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+}
+
+.voice-select option {
+    background: #0B0F19;
+    color: #F8FAFC;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    color: var(--c-emerald);
+    font-weight: 500;
+}
+
+.status-indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c-emerald);
+    box-shadow: 0 0 8px var(--c-emerald);
+    animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+.hud-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+    border: 1px solid var(--c-emerald);
+    border-radius: 9999px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.hud-link-btn:hover {
+    box-shadow: 0 0 18px var(--c-emerald-glow);
+    transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════ CHATGPT-STYLE VOICE ORB STAGE ═══ */
+.assistant-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Canvas Viewport */
+#avatar-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    cursor: grab;
+}
+
+/* Astrolabe Hologram Projections behind Orb */
+.astrolabe-hologram-rings {
+    position: absolute;
+    width: 580px;
+    height: 580px;
+    border-radius: 50%;
+    border: 1px dashed rgba(6, 182, 212, 0.25);
+    pointer-events: none;
+    z-index: 1;
+    animation: rotate-ring 60s linear infinite;
+}
+
+.astrolabe-hologram-rings::before {
+    content: '';
+    position: absolute;
+    inset: 45px;
+    border-radius: 50%;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    animation: rotate-ring-rev 40s linear infinite;
+}
+
+.astrolabe-hologram-rings::after {
+    content: '';
+    position: absolute;
+    inset: 95px;
+    border-radius: 50%;
+    border: 1.5px dotted rgba(245, 158, 11, 0.25);
+    animation: rotate-ring 25s linear infinite;
+}
+
+@keyframes rotate-ring {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes rotate-ring-rev {
+    0% { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* ═══════════════════════════════════════════ SUBTITLES & CHATGPT VOICE HUD ═══ */
+.assistant-bottom-hud {
+    position: relative;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 28px;
+    gap: 16px;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    pointer-events: auto;
+}
+
+/* Live Subtitle Transcript Banner (Praktika / ChatGPT Voice) */
+.subtitle-box {
+    width: calc(100% - 36px);
+    background: rgba(11, 15, 25, 0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 16px 24px;
+    text-align: center;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(6, 182, 212, 0.12);
+    min-height: 76px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.35s ease;
+}
+
+.subtitle-box.speaking {
+    border-color: var(--c-cyan);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--c-cyan-glow);
+}
+
+.subtitle-box.listening {
+    border-color: #EF4444;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(239, 68, 68, 0.4);
+}
+
+.subtitle-speaker-tag {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+    color: var(--c-emerald);
+}
+
+.subtitle-text {
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.55;
+    color: #F8FAFC;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+/* Quick Question Chips */
+.quick-prompts-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    width: calc(100% - 36px);
+    padding: 4px 4px;
+    scrollbar-width: none;
+}
+
+.quick-prompts-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.prompt-chip {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    backdrop-filter: blur(8px);
+}
+
+.prompt-chip:hover {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--c-emerald);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+}
+
+/* Voice Controls & Mic Button */
+.voice-controls-dock {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.secondary-dock-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-size: 1.05rem;
+    backdrop-filter: blur(10px);
+}
+
+.secondary-dock-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    transform: scale(1.08);
+}
+
+.secondary-dock-btn.active {
+    background: rgba(6, 182, 212, 0.2);
+    border-color: var(--c-cyan);
+    color: var(--c-cyan);
+    box-shadow: 0 0 15px var(--c-cyan-glow);
+}
+
+/* Big ChatGPT-Style Pulse Mic Button */
+.main-mic-button {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10B981, #059669);
+    border: none;
+    color: #fff;
+    font-size: 1.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4), 0 0 25px rgba(16, 185, 129, 0.3);
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.main-mic-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 15px 40px rgba(16, 185, 129, 0.6), 0 0 35px rgba(16, 185, 129, 0.5);
+}
+
+.main-mic-button.listening {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.6), 0 0 35px rgba(239, 68, 68, 0.5);
+    animation: mic-pulse 1.3s infinite;
+}
+
+.main-mic-button.thinking {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.6);
+}
+
+.main-mic-button.speaking {
+    background: linear-gradient(135deg, #06B6D4, #0284C7);
+    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.6);
+}
+
+@keyframes mic-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* Audio Waveform Canvas */
+#waveform-canvas {
+    width: 140px;
+    height: 40px;
+    display: block;
+}
+
+/* ═══════════════════════════════════════════ CHAT HISTORY DRAWER (SLIDE-UP) ═══ */
+.chat-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(105%);
+    width: 100%;
+    max-width: 760px;
+    max-height: 75vh;
+    background: rgba(11, 15, 25, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: none;
+    border-radius: 28px 28px 0 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(16, 185, 129, 0.2);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chat-drawer.open {
+    transform: translateX(-50%) translateY(0%);
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.drawer-title {
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+}
+
+.drawer-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.drawer-close-btn:hover {
+    color: #fff;
+}
+
+.chat-messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 50vh;
+}
+
+.chat-bubble {
+    max-width: 82%;
+    padding: 12px 18px;
+    border-radius: 18px;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    word-break: break-word;
+}
+
+.chat-bubble.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(59, 130, 246, 0.25));
+    border: 1px solid rgba(6, 182, 212, 0.4);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.hilmi {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+
+.drawer-input-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px 24px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.drawer-input-form input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+    padding: 12px 20px;
+    color: #fff;
+    outline: none;
+    font-size: 0.92rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.drawer-input-form input:focus {
+    border-color: var(--c-emerald);
+}
+
+.drawer-send-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--c-emerald);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.drawer-send-btn:hover {
+    transform: scale(1.05);
+    background: #059669;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .assistant-header {
+        padding: 14px 18px;
+    }
+    .assistant-role {
+        display: none;
+    }
+    .subtitle-text {
+        font-size: 0.95rem;
+    }
+    .main-mic-button {
+        width: 74px;
+        height: 74px;
+        font-size: 1.6rem;
+    }
+}

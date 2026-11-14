@@ -1,0 +1,126 @@
+[
+  {
+    "id": "falak_01_hisab_rukyat",
+    "topik": "Perbedaan Hisab dan Rukyat",
+    "kata_kunci": [
+      "hisab",
+      "rukyat",
+      "hisab vs rukyat",
+      "perbedaan hisab rukyat",
+      "metode penentuan bulan"
+    ],
+    "ringkasan_singkat": "Hisab adalah metode perhitungan matematis dan astronomis posisi benda langit, sedangkan rukyat adalah observasi visual langsung kemunculan hilal sesaat setelah matahari terbenam. Keduanya saling melengkapi dalam khazanah falak Islam.",
+    "penjelasan_lengkap": "Dalam astronomi Islam, Hisab (astronomical calculation) menggunakan hukum fisika dan matematika celestial untuk memprediksi posisi matahari dan bulan secara presisi tinggi, seperti algoritma Jean Meeus atau ephemeris NASA JPL DE421. Sementara Rukyatul Hilal bil Fi'li adalah pengamatan empiris di lapangan menggunakan mata telanjang atau teleskop saat matahari terbenam pada hari ke-29 bulan Hijriah. Ulama kontemporer memadukan keduanya: hisab sebagai penentu arah dan visibilitas hilal, sedangkan rukyat sebagai verifikasi faktual lapangan.",
+    "sumber": "Kompilasi Temu Pakar Falak Kemenag RI & Fiqh Falak Modern",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "falak_02_ijtimak",
+    "topik": "Ijtimak atau Konjungsi Astronomis",
+    "kata_kunci": [
+      "ijtimak",
+      "konjungsi",
+      "conjunction",
+      "ijtima",
+      "bulan mati",
+      "new moon"
+    ],
+    "ringkasan_singkat": "Ijtimak atau konjungsi adalah peristiwa astronomis ketika bumi, bulan, dan matahari berada pada satu bujur ekliptika yang sama. Ini adalah batas astronomis berakhirnya bulan kamariyah lama dan mulainya bulan baru.",
+    "penjelasan_lengkap": "Ijtimak (geocentric conjunction) terjadi ketika posisi geosentris Bulan dan Matahari memiliki bujur ekliptika (ecliptic longitude) yang sama. Secara astronomis, fase ini menandai 'bulan mati' di mana sisi bulan yang menghadap bumi tidak memantulkan cahaya matahari. Dalam penentuan kalender Hijriah, ijtimak merupakan syarat mutlak; hilal tidak mungkin terbentuk atau terlihat sebelum terjadinya ijtimak.",
+    "sumber": "Ephemeris Hisab Rukyat Kemenag RI & Jean Meeus Astronomical Algorithms",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "falak_03_wujudul_hilal",
+    "topik": "Kriteria Wujudul Hilal",
+    "kata_kunci": [
+      "wujudul hilal",
+      "kriteria muhammadiyah",
+      "wujud hilal",
+      "kapan wujudul hilal"
+    ],
+    "ringkasan_singkat": "Wujudul Hilal adalah kriteria penanggalan Hijriah yang menetapkan bulan baru telah masuk jika telah terjadi ijtimak sebelum matahari terbenam dan piringan atas bulan masih berada di atas ufuk saat matahari terbenam, berapapun ketinggiannya.",
+    "penjelasan_lengkap": "Prinsip Wujudul Hilal yang dipedomani oleh Muhammadiyah mensyaratkan tiga parameter kumulatif: 1) Telah terjadi ijtimak, 2) Ijtimak terjadi sebelum matahari terbenam (ghurub), dan 3) Saat matahari terbenam, piringan atas bulan masih berada di atas ufuk hakiki (ketinggian > 0 derajat). Kriteria ini tidak mensyaratkan hilal harus bisa dilihat secara fisik dengan mata, melainkan cukup secara eksistensi geometris astronomis.",
+    "sumber": "Majelis Tarjih dan Tajdid PP Muhammadiyah",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "falak_04_mabims_2021",
+    "topik": "Kriteria Imkanur Rukyat MABIMS 2021 (Kriteria Baru)",
+    "kata_kunci": [
+      "mabims",
+      "mabims 2021",
+      "kriteria baru mabims",
+      "imkanur rukyat",
+      "syarat hilal kemenag",
+      "3 derajat 6.4 derajat"
+    ],
+    "ringkasan_singkat": "Kriteria baru MABIMS 2021 menyepakati bahwa hilal dianggap mungkin terlihat (imkanur rukyat) jika saat maghrib tinggi hilal mar'i minimal 3 derajat dan sudut elongasi geosentris minimal 6,4 derajat.",
+    "penjelasan_lengkap": "Kriteria MABIMS (Menteri Agama Brunei, Indonesia, Malaysia, dan Singapura) diperbarui pada 2021 dan mulai diterapkan resmi oleh Kemenag RI pada 1443 H/2022 M. Kriteria ini menggantikan standar lama (2 derajat tinggi, 3 derajat elongasi). Nilai 3 derajat memperhitungkan refraksi dan ketebalan lapisan polusi serta uap air di ufuk, sementara elongasi 6,4 derajat memastikan ketebalan sabit bulan dan kontras cahaya hilal cukup terang melampaui sisa cahaya senja (twilight).",
+    "sumber": "Kesepakatan Menteri Agama Brunei Darussalam, Republik Indonesia, Malaysia, dan Singapura (MABIMS) 2021",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "falak_05_mabims_lama",
+    "topik": "Kriteria MABIMS Lama (Kriteria 2-3-8)",
+    "kata_kunci": [
+      "mabims lama",
+      "kriteria lama kemenag",
+      "2 derajat",
+      "kriteria 2 3 8"
+    ],
+    "ringkasan_singkat": "Kriteria lama MABIMS mensyaratkan tinggi hilal minimal 2 derajat, elongasi 3 derajat, atau umur bulan minimal 8 jam sejak ijtimak. Kriteria ini telah dihentikan penggunaannya sejak 2021 karena dinilai terlalu rendah secara sains astronomi modern.",
+    "penjelasan_lengkap": "Kriteria lama MABIMS dirumuskan pada akhir abad ke-20 dengan parameter minimal tinggi 2 derajat dan elongasi 3 derajat, atau umur bulan 8 jam. Namun, berdasarkan riset astronomi modern (seperti catatan visibilitas Odeh dan LAPAN/BRIN), hilal pada ketinggian 2 derajat di wilayah tropis hampir mustahil dilihat mata maupun teleskop karena kontras cahaya redup terkubur hamburan cahaya senja. Oleh karena itu disepakati pembaharuan menjadi 3 derajat dan 6,4 derajat pada 2021.",
+    "sumber": "Dokumen Sejarah Hisab Rukyat Kemenag RI",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "falak_06_kriteria_nu",
+    "topik": "Kriteria Nahdlatul Ulama (LF PBNU)",
+    "kata_kunci": [
+      "kriteria nu",
+      "lf pbnu",
+      "rukyat nu",
+      "sidang isbat nu",
+      "nahdlatul ulama falak"
+    ],
+    "ringkasan_singkat": "Lembaga Falakiyah PBNU berpegang pada metode rukyatul hilal bil fi'li yang dipadukan dengan hisab imkanur rukyat MABIMS baru (3 derajat dan elongasi 6,4 derajat) sebagai filter saintifik keabsahan laporan rukyat.",
+    "penjelasan_lengkap": "Bagi Nahdlatul Ulama, penetapan awal bulan qamariyah mensyaratkan kesaksian rukyatul hilal langsung yang disumpah di hadapan hakim pengadilan agama. Namun, LF PBNU menggunakan hisab kontemporer presisi tinggi sebagai batas filter ilmiah: jika hisab menunjukkan hilal masih di bawah kriteria imkanur rukyat MABIMS, maka laporan penglihatan hilal yang masuk akan ditolak atau diverifikasi sangat ketat karena patut diduga salah lihat (misalnya objek bintang, pantulan awan, atau ilusi optik).",
+    "sumber": "Pedoman Penentuan Awal Bulan Qamariyah LF PBNU",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "falak_07_toposentris_geosentris",
+    "topik": "Perbedaan Toposentris dan Geosentris",
+    "kata_kunci": [
+      "toposentris",
+      "geosentris",
+      "topocentric",
+      "geocentric",
+      "beda lihat",
+      "parallax"
+    ],
+    "ringkasan_singkat": "Geosentris adalah posisi benda langit jika dilihat dari titik pusat bumi, sedangkan toposentris adalah posisi nyata jika dilihat dari permukaan tempat pengamat berdiri. Posisi toposentris memperhitungkan paralaks dan refraksi tempat pengamat.",
+    "penjelasan_lengkap": "Karena bumi berbentuk bulat dengan radius sekitar 6.371 km, posisi bulan relatif terhadap pengamat di permukaan bumi berbeda dari posisi terhadap titik pusat bumi. Selisih sudut ini disebut paralaks (beda lihat horizontal). Pada posisi toposentris, ketinggian bulan selalu terlihat lebih rendah sekitar 0,8 hingga 1 derajat dibandingkan ketinggian geosentrisnya. Kriteria MABIMS 2021 menggunakan tinggi toposentris/mar'i dan elongasi geosentris.",
+    "sumber": "Buku Astronomi Praktis & Ephemeris Kemenag RI",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "falak_08_parameter_hisab",
+    "topik": "Parameter-Parameter Penting Hisab Hilal",
+    "kata_kunci": [
+      "elongasi",
+      "azimuth",
+      "altitude",
+      "refraksi",
+      "dip",
+      "semidiameter",
+      "umur bulan",
+      "parameter hisab"
+    ],
+    "ringkasan_singkat": "Parameter hisab hilal mencakup altitude (tinggi), azimuth (arah kompas), elongasi (sudut pisah bulan-matahari), refraksi (pembiasan atmosfer), dip (kerendahan ufuk), semidiameter (jari-jari piringan), dan umur bulan.",
+    "penjelasan_lengkap": "1) Altitude/Tinggi: sudut vertikal dari ufuk pengamat ke pusat piringan bulan. 2) Azimuth: arah busur horizontal diukur dari Utara Sejati (0-360 derajat). 3) Elongasi: jarak busur sudut antara pusat matahari dan bulan. 4) Refraksi Atmosfer: pembelokan berkas cahaya akibat atmosfer bumi yang membuat benda langit tampak lebih tinggi ~34 menit busur di dekat ufuk. 5) Dip (Kerendahan Ufuk): koreksi penurunan ufuk mar'i akibat elevasi ketinggian pengamat di atas permukaan laut. 6) Semidiameter: jari-jari sudut penampakan piringan bulan (~15-16 menit busur). 7) Umur Bulan: selang waktu dari ijtimak hingga matahari terbenam.",
+    "sumber": "Pedoman Ephemeris Hisab Rukyat Kemenag RI & Jean Meeus",
+    "tingkat_keyakinan": "tinggi"
+  }
+]

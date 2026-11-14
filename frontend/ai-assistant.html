@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HILMI — Falak Voice AI Assistant · HILTRON Falak Hub</title>
+    <meta name="description"
+        content="HILMI: Asisten Suara Astronomi Islam Cerdas Berbasis AI Generatif dan Ephemeris NASA JPL DE421 pada Observatorium Digital HILTRON.">
+    <link rel="icon" type="image/x-icon" href="assets/hiltron.ico">
+
+    <!-- Fonts (Offline Bundle) -->
+    <link rel="stylesheet" href="vendor/fonts/fonts.css">
+
+    <!-- Icons (Offline Font Awesome 6.5.1) -->
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+
+    <!-- Dedicated AI Assistant Styling -->
+    <link rel="stylesheet" href="css/assistant.css">
+
+    <!-- Three.js Import Map (r165 — Local Offline Bundle) -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three":          "./vendor/three/three.module.js",
+                "three/addons/":  "./vendor/three/addons/"
+            }
+        }
+    </script>
+</head>
+
+<body>
+
+    <!-- Ambient Cosmic Glow Canvas -->
+    <div class="assistant-bg"></div>
+
+    <div class="assistant-container">
+
+        <!-- ═══════════════════════════════════════════ TOP HUD NAVBAR ═══ -->
+        <header class="assistant-header">
+            <div class="header-left">
+                <a href="index.html" class="back-btn" title="Kembali ke Landing Page">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Beranda</span>
+                </a>
+                <div class="assistant-identity">
+                    <div class="assistant-name">
+                        <span>HILMI</span>
+                        <span class="assistant-badge">Falak Voice AI</span>
+                    </div>
+                    <span class="assistant-role">HILTRON Autonomous Falak Companion</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="voice-selector-wrapper" title="Pilihan Model Suara Neural">
+                    <i class="fas fa-volume-high" style="color:var(--c-emerald);font-size:0.8rem;"></i>
+                    <select id="neural-voice-select" class="voice-select">
+                        <option value="id-ID-ArdiNeural" selected>Ardi (Pria Alami)</option>
+                        <option value="id-ID-GadisNeural">Gadis (Wanita Luwes)</option>
+                    </select>
+                </div>
+
+                <div class="status-pill" id="status-pill">
+                    <span class="status-indicator-dot"></span>
+                    <span id="status-indicator-text">Siap Berdialog</span>
+                </div>
+                <a href="app.html" class="hud-link-btn" title="Buka Observatorium 3D Utama">
+                    <i class="fas fa-compass"></i>
+                    <span>Observatorium</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- ═══════════════════════════════════════════ CHATGPT-STYLE VOICE ORB STAGE ═══ -->
+        <main class="assistant-stage" id="avatar-canvas-container">
+            <!-- Three.js Canvas: Fluid Morphing Audio-Reactive Orb & Stars -->
+            <canvas id="avatar-canvas"></canvas>
+
+            <!-- Holographic Astrolabe Geometry Rings -->
+            <div class="astrolabe-hologram-rings"></div>
+        </main>
+
+        <!-- ═══════════════════════════════════════════ DIALOG & VOICE HUD ═══ -->
+        <footer class="assistant-bottom-hud">
+
+            <!-- Subtitle / Live Transcript Box (ChatGPT Voice Style) -->
+            <div class="subtitle-box" id="subtitle-box">
+                <div class="subtitle-speaker-tag" id="subtitle-speaker-tag">Hilmi (Falak AI)</div>
+                <div class="subtitle-text" id="subtitle-text">
+                    "Assalamu'alaikum! Saya Hilmi, asisten AI astronomi Islam Anda. Silakan tekan mikrofon untuk mulai berdialog tentang hisab hilal atau teleskop."
+                </div>
+            </div>
+
+            <!-- Quick Question Chips -->
+            <div class="quick-prompts-bar">
+                <button class="prompt-chip" data-prompt="Jelaskan kriteria visibilitas hilal MABIMS 2021">
+                    <i class="fas fa-moon" style="color:var(--c-emerald);margin-right:6px;"></i>Kriteria MABIMS 2021
+                </button>
+                <button class="prompt-chip" data-prompt="Kapan awal Ramadhan dan hisab hilalnya?">
+                    <i class="fas fa-calendar-alt" style="color:var(--c-amber);margin-right:6px;"></i>Hisab Awal Ramadhan
+                </button>
+                <button class="prompt-chip" data-prompt="Bagaimana cara kerja tracking otomatis teleskop ESP32?">
+                    <i class="fas fa-robot" style="color:var(--c-cyan);margin-right:6px;"></i>Tracker ESP32 IoT
+                </button>
+                <button class="prompt-chip" data-prompt="Bagaimana cara menentukan arah kiblat presisi?">
+                    <i class="fas fa-kaaba" style="color:#A78BFA;margin-right:6px;"></i>Arah Kiblat
+                </button>
+            </div>
+
+            <!-- Voice Controls Dock -->
+            <div class="voice-controls-dock">
+                <button class="secondary-dock-btn" id="toggle-history-btn" title="Lihat Riwayat & Ketik Pesan">
+                    <i class="fas fa-comments"></i>
+                </button>
+
+                <!-- Big Main Pulse Microphone Button (ChatGPT Voice Style) -->
+                <button class="main-mic-button" id="main-mic-btn" title="Tekan untuk Bicara">
+                    <i class="fas fa-microphone"></i>
+                </button>
+
+                <!-- Audio Waveform Visualizer -->
+                <canvas id="waveform-canvas" width="140" height="40" title="Indikator Gelombang Suara"></canvas>
+            </div>
+
+        </footer>
+
+        <!-- ═══════════════════════════════════════════ CHAT HISTORY DRAWER (SLIDE-UP) ═══ -->
+        <aside class="chat-drawer" id="chat-drawer" aria-label="Riwayat Percakapan">
+            <div class="drawer-header">
+                <div class="drawer-title">
+                    <i class="fas fa-comments" style="color:var(--c-emerald);"></i>
+                    <span>Riwayat Percakapan Falak AI</span>
+                </div>
+                <button class="drawer-close-btn" id="drawer-close-btn" title="Tutup Riwayat">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="chat-messages-container" id="chat-messages-container">
+                <div class="chat-bubble hilmi">
+                    Assalamu'alaikum! Saya Hilmi, asisten AI astronomi Islam Anda. Ada yang bisa saya bantu terkait hisab hilal, arah kiblat, atau teleskop hari ini?
+                </div>
+            </div>
+
+            <form class="drawer-input-form" id="drawer-input-form">
+                <input type="text" id="drawer-query-input" placeholder="Ketik pertanyaan seputar ilmu falak..." autocomplete="off">
+                <button type="submit" class="drawer-send-btn" title="Kirim">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </aside>
+
+    </div>
+
+    <!-- Assistant Logic (Module) -->
+    <script type="module" src="js/assistant.js"></script>
+
+</body>
+
+</html>

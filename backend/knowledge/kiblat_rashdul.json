@@ -1,0 +1,48 @@
+[
+  {
+    "id": "kiblat_01_rumus_azimuth",
+    "topik": "Arah Kiblat dan Rumus Perhitungannya",
+    "kata_kunci": [
+      "kiblat",
+      "arah kiblat",
+      "azimuth kiblat",
+      "rumus kiblat",
+      "ka'bah",
+      "derajat kiblat"
+    ],
+    "ringkasan_singkat": "Arah kiblat adalah arah busur terpendek dari posisi pengamat di permukaan bumi menuju Ka'bah di Mekkah (21°25'21\" LU, 39°49'34\" BT). Di Indonesia, arah kiblat berkisar antara 290° hingga 295° dari arah Utara sejati searah jarum jam.",
+    "penjelasan_lengkap": "Penentuan arah kiblat menggunakan trigonometri bola (spherical trigonometry) segitiga bola antara Kutub Utara, posisi pengamat (lintang phi, bujur lambda), dan posisi Ka'bah (lintang phi_k = 21,422487° N, bujur lambda_k = 39,826206° E). Rumus matematisnya: tan(Q) = sin(delta_lambda) / [cos(phi)*tan(phi_k) - sin(phi)*cos(delta_lambda)]. Hasil sudut Q diukur dari Utara Sejati ke Barat (sekitar 65-70 derajat dari Barat ke Utara, atau azimuth 290-295 derajat).",
+    "sumber": "Ilmu Falak Teori dan Praktik & Pedoman Penentuan Arah Kiblat Kemenag RI",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "kiblat_02_rashdul_kiblat_global",
+    "topik": "Rashdul Kiblat Global (Istiwa' A'zham)",
+    "kata_kunci": [
+      "rashdul kiblat",
+      "istiwa a'zham",
+      "bayangan kiblat",
+      "28 mei",
+      "16 juli",
+      "kalibrasi arah kiblat"
+    ],
+    "ringkasan_singkat": "Rashdul Kiblat global terjadi dua kali setahun, yaitu pada 28 Mei pukul 16.18 WIB dan 16 Juli pukul 16.27 WIB (atau 27 Mei & 15 Juli pada tahun kabisat). Pada saat itu matahari tepat di atas Ka'bah, sehingga semua bayangan benda tegak lurus mengarah ke kiblat.",
+    "penjelasan_lengkap": "Ketika deklinasi matahari tepat sama dengan lintang geografis Ka'bah (21° 25' LU) dan matahari melintasi meridian Ka'bah, posisi matahari berada tepat di zenit Ka'bah. Fenomena ini disebut Istiwa' A'zham atau Rashdul Kiblat Global. Siapapun di belahan bumi yang mengalami siang hari (termasuk Indonesia bagian barat dan tengah) dapat mengalibrasi arah kiblat dengan sangat akurat dan mudah: cukup tancapkan tongkat lurus secara tegak pada bidang datar, bayangan tongkat pada jam tersebut mengarah persis ke arah kiblat.",
+    "sumber": "Badan Hisab Rukyat Kemenag RI",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "kiblat_03_rashdul_kiblat_harian",
+    "topik": "Rashdul Kiblat Harian (Lokal)",
+    "kata_kunci": [
+      "rashdul kiblat harian",
+      "bayangan kiblat harian",
+      "kiblat harian",
+      "kalibrasi kiblat lokal"
+    ],
+    "ringkasan_singkat": "Rashdul Kiblat harian adalah waktu pada setiap hari ketika posisi matahari melintasi azimuth arah kiblat suatu daerah. Pada waktu tersebut, bayangan benda tegak akan sejajar persis dengan garis arah kiblat lokal.",
+    "penjelasan_lengkap": "Jika tidak ingin menunggu tanggal 28 Mei atau 16 Juli, penentuan arah kiblat dapat dilakukan setiap hari menggunakan metode Rashdul Kiblat Harian. Menggunakan rumus segitiga bola matahari, dihitung jam berapa azimuth matahari tepat sama dengan azimuth kiblat setempat (atau azimuth kiblat + 180 derajat). Saat jam tersebut tiba di lokasi pengamat, bayangan benda yang berdiri tegak lurus langsung menunjukkan garis arah kiblat.",
+    "sumber": "Buku Ilmu Falak Khazanah Islam Modern",
+    "tingkat_keyakinan": "tinggi"
+  }
+]

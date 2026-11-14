@@ -1,0 +1,49 @@
+[
+  {
+    "id": "gerhana_01_matahari",
+    "topik": "Gerhana Matahari (Kusuf asy-Syams)",
+    "kata_kunci": [
+      "gerhana matahari",
+      "kusuf",
+      "solar eclipse",
+      "gerhana total",
+      "gerhana cincin",
+      "gerhana hibrida"
+    ],
+    "ringkasan_singkat": "Gerhana matahari terjadi ketika bulan melintas di antara bumi dan matahari sehingga menutupi sebagian atau seluruh piringan matahari. Ini hanya terjadi pada fase bulan mati (ijtimak) di dekat simpul orbit bulan.",
+    "penjelasan_lengkap": "Orbit bulan memiliki kemiringan sekitar 5,14 derajat terhadap bidang ekliptika bumi. Gerhana matahari hanya terjadi saat ijtimak bertepatan dengan bulan yang berada di dekat salah satu titik potong orbitnya (simpul naik / ascending node atau simpul turun / descending node). Jenis gerhana matahari ada empat: Gerhana Matahari Total (GMT), Gerhana Matahari Sebagian (GMS), Gerhana Matahari Cincin (GMC), dan Gerhana Matahari Hibrida (GMH). Saat gerhana matahari, umat Islam disunnahkan melaksanakan Salat Kusuf.",
+    "sumber": "NASA Eclipse Website & Fiqh Salat Kusuf",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "gerhana_02_bulan",
+    "topik": "Gerhana Bulan (Khusuf al-Qamar)",
+    "kata_kunci": [
+      "gerhana bulan",
+      "khusuf",
+      "lunar eclipse",
+      "gerhana total bulan",
+      "blood moon",
+      "gerhana penumbra"
+    ],
+    "ringkasan_singkat": "Gerhana bulan terjadi ketika bumi berada persis di antara matahari dan bulan, sehingga bayangan bumi menutupi piringan bulan. Ini selalu terjadi pada fase purnama (istiqbal) di dekat simpul orbit.",
+    "penjelasan_lengkap": "Bayangan bumi memiliki dua bagian: kerucut gelap total (umbra) dan kerucut kabur (penumbra). Jenis gerhana bulan meliputi: Gerhana Bulan Total (seluruh piringan bulan masuk ke umbra bumi, sering tampak merah tembaga karena hamburan Rayleigh atmosfer bumi), Gerhana Bulan Sebagian (hanya sebagian bulan masuk umbra), dan Gerhana Bulan Penumbra (bulan hanya melewati bayangan penumbra sehingga cahayanya sedikit meredup). Saat gerhana bulan terlihat, disunnahkan melaksanakan Salat Khusuf.",
+    "sumber": "Badan Riset dan Inovasi Nasional (BRIN) & Fiqh Sunnah",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "gerhana_03_salat_gerhana",
+    "topik": "Salat Gerhana (Kusuf dan Khusuf)",
+    "kata_kunci": [
+      "salat gerhana",
+      "shalat gerhana",
+      "tata cara salat gerhana",
+      "hukum salat gerhana",
+      "khutbah gerhana"
+    ],
+    "ringkasan_singkat": "Salat gerhana hukumnya sunnah muakkadah. Dilaksanakan dua rakaat dengan tata cara khusus: setiap rakaat terdiri dari dua kali berdiri, dua kali membaca surat, dan dua kali ruku', diakhiri dengan dua khutbah nasihat.",
+    "penjelasan_lengkap": "Nabi Muhammad SAW bersabda bahwa sesungguhnya matahari dan bulan adalah dua tanda di antara tanda-tanda kebesaran Allah; keduanya tidak mengalami gerhana karena mati atau hidupnya seseorang. Tata caranya: 1) Niat salat kusuf (matahari) atau khusuf (bulan), 2) Takbiratul ihram, membaca Al-Fatihah dan surat, 3) Ruku' pertama yang panjang, 4) Bangkit i'tidal lalu membaca Al-Fatihah dan surat kedua, 5) Ruku' kedua, 6) I'tidal lalu sujud dua kali, 7) Mengulangi rakaat kedua dengan pola serupa (dua ruku'), 8) Salam, dilanjutkan mendengarkan khutbah gerhana.",
+    "sumber": "Hadits Shahih Bukhari & Muslim, Kitab Fathul Mu'in",
+    "tingkat_keyakinan": "tinggi"
+  }
+]

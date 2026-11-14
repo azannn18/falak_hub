@@ -28,4 +28,8 @@ test_*.py
 recover.py
 render.yaml
 *.md
+backend/tests/
+backend/tools/
+backend/ai/tts/cache/
+backend/logs/
 

@@ -2,21 +2,33 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    if os.path.exists(".env.local"):
+        load_dotenv(".env.local")
+except ImportError:
+    pass
+
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from datetime import datetime, timezone
+from collections import defaultdict
+import time
 import socket
 import subprocess
 import urllib.request
 import uvicorn
 import json
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from geopy.geocoders import Nominatim
 
 from astronomy.engine import FalakCalculator
 from ai.predictive_cache import PredictiveCache
+from ai.assistant_brain import FalakAssistantBrain
+from ai.tts import get_tts_router
 from paths import get_data_dir, get_frontend_dir, is_frozen
 
 app = FastAPI(title="HILTRON API", version="1.2.0")
@@ -32,6 +44,7 @@ app.add_middleware(
 
 calc = None
 cache = None
+assistant_brain = None
 
 def get_calculator():
     global calc, cache
@@ -39,6 +52,13 @@ def get_calculator():
         calc = FalakCalculator()
         cache = PredictiveCache(calc)
     return calc, cache
+
+def get_assistant_brain():
+    global assistant_brain
+    if assistant_brain is None:
+        c, _ = get_calculator()
+        assistant_brain = FalakAssistantBrain(c)
+    return assistant_brain
 
 class HijriDate(BaseModel):
     day: int
@@ -227,6 +247,136 @@ esp32_telemetry = {
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "version": "1.2.0"}
+
+class AssistantChatRequest(BaseModel):
+    message: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    date: Optional[str] = None
+    history: Optional[List[Dict[str, str]]] = None
+    session_id: Optional[str] = None
+
+class AssistantChatResponse(BaseModel):
+    reply: str
+    engine: str
+    provider_used: Optional[str] = None
+    sources: Optional[List[Dict[str, str]]] = None
+    context: Optional[dict] = None
+    timestamp: str
+
+# In-memory Rate Limiting per IP (20 requests/minute)
+IP_REQUEST_LOGS: Dict[str, List[float]] = defaultdict(list)
+RATE_LIMIT_PER_MINUTE = 20
+
+def apply_rate_limit(client_ip: str):
+    now = time.time()
+    recent = [t for t in IP_REQUEST_LOGS[client_ip] if now - t < 60.0]
+    if len(recent) >= RATE_LIMIT_PER_MINUTE:
+        raise HTTPException(
+            status_code=429,
+            detail="Batas permintaan terlampaui (maksimal 20 pesan per menit). Silakan tunggu sebentar."
+        )
+    recent.append(now)
+    IP_REQUEST_LOGS[client_ip] = recent
+
+@app.post("/api/assistant/chat", response_model=AssistantChatResponse)
+async def assistant_chat(req: AssistantChatRequest, request: Request = None):
+    client_ip = request.client.host if (request and request.client) else "127.0.0.1"
+    apply_rate_limit(client_ip)
+
+    brain = get_assistant_brain()
+    dt = None
+    if req.date:
+        try:
+            dt = datetime.fromisoformat(req.date.replace("Z", "+00:00"))
+        except Exception:
+            dt = None
+            
+    res = await brain.process_chat_async(
+        message=req.message,
+        lat=req.latitude,
+        lon=req.longitude,
+        dt=dt,
+        telemetry=esp32_telemetry,
+        history=req.history,
+        session_id=req.session_id
+    )
+    return res
+
+@app.post("/api/assistant/chat/stream")
+async def assistant_chat_stream(req: AssistantChatRequest, request: Request = None):
+    """
+    Streaming endpoint (SSE): Memancarkan kalimat-demi-kalimat segera setelah terbentuk
+    agar Text-to-Speech di frontend dapat segera bersuara (sub-second TTS response).
+    """
+    client_ip = request.client.host if (request and request.client) else "127.0.0.1"
+    apply_rate_limit(client_ip)
+
+    brain = get_assistant_brain()
+    dt = None
+    if req.date:
+        try:
+            dt = datetime.fromisoformat(req.date.replace("Z", "+00:00"))
+        except Exception:
+            dt = None
+
+    async def event_generator():
+        async for event in brain.process_chat_stream(
+            message=req.message,
+            lat=req.latitude,
+            lon=req.longitude,
+            dt=dt,
+            telemetry=esp32_telemetry,
+            history=req.history,
+            session_id=req.session_id
+        ):
+            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+class AssistantTTSRequest(BaseModel):
+    text: str
+    voice: Optional[str] = "id-ID-ArdiNeural"
+    rate: Optional[str] = "+0%"
+    pitch: Optional[str] = "+0Hz"
+    volume: Optional[str] = "+0%"
+    provider: Optional[str] = None
+    use_cache: Optional[bool] = True
+
+@app.post("/api/assistant/tts")
+async def assistant_tts(req: AssistantTTSRequest):
+    """
+    Generate Neural Text-to-Speech menggunakan TTSRouter berlapis
+    dengan normalisasi bahasa lisan santri falak dan caching cerdas.
+    """
+    router = get_tts_router()
+    res = await router.synthesize(
+        text=req.text,
+        voice=req.voice,
+        rate=req.rate,
+        pitch=req.pitch,
+        volume=req.volume,
+        use_cache=req.use_cache,
+        preferred_provider=req.provider
+    )
+    if not res.is_success or not res.audio_bytes:
+        raise HTTPException(status_code=500, detail=f"Gagal generate TTS: {res.error}")
+
+    return Response(
+        content=res.audio_bytes,
+        media_type=res.media_type,
+        headers={
+            "X-TTS-Provider": res.provider_name,
+            "X-TTS-Voice": res.voice_name,
+            "X-TTS-Latency-Ms": str(res.latency_ms),
+            "X-TTS-Cached": "true" if res.cached else "false"
+        }
+    )
+
+@app.get("/api/assistant/voices")
+def get_assistant_voices():
+    router = get_tts_router()
+    return {"voices": router.get_voices()}
 
 
 def _detect_lan_ip() -> str:

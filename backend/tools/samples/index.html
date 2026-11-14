@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HILMI Voice TTS Benchmark — LAMA vs BARU</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #121826;
+            --bg-card: #172033;
+            --border-color: #24304d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b9bb4;
+            --accent-lama: #f85149;
+            --accent-baru: #2ea043;
+            --accent-cyan: #38bdf8;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+        header h1 span { color: var(--accent-cyan); }
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 750px;
+            margin: 0 auto;
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+        }
+        .stat-item strong { color: var(--accent-cyan); }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: border-color 0.2s;
+        }
+        .card:hover {
+            border-color: #3b82f6;
+        }
+        .card-header {
+            background: var(--bg-secondary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .card-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .badge {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+        @media (max-width: 850px) {
+            .comparison-grid { grid-template-columns: 1fr; }
+        }
+        .variant-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .variant-lama { border-left: 4px solid var(--accent-lama); }
+        .variant-baru { border-left: 4px solid var(--accent-baru); }
+        .variant-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+        .pill {
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+        }
+        .pill-lama { background: rgba(248, 81, 73, 0.15); color: #ff7b72; border: 1px solid rgba(248, 81, 73, 0.4); }
+        .pill-baru { background: rgba(46, 160, 67, 0.15); color: #56d364; border: 1px solid rgba(46, 160, 67, 0.4); }
+        .meta { font-size: 0.8rem; color: var(--text-secondary); }
+        .text-content {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 1.2rem;
+            min-height: 4.5rem;
+            line-height: 1.5;
+        }
+        .spoken-highlight {
+            color: #e2e8f0;
+            background: rgba(34, 197, 94, 0.05);
+            padding: 0.5rem;
+            border-radius: 4px;
+            border-left: 2px solid #22c55e;
+        }
+        audio {
+            width: 100%;
+            height: 36px;
+            border-radius: 18px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HILMI Voice <span>TTS Benchmark</span></h1>
+            <p>Perbandingan audio langsung antara format pembacaan teks mentah (Versi Lama) dengan teks yang dinormalisasi bahasa lisan santri falak (Versi Baru).</p>
+            <div class="stats-bar">
+                <div class="stat-item">Jumlah Sampel: <strong>15 Kasus</strong></div>
+                <div class="stat-item">Engine: <strong>Microsoft Edge Neural TTS (Ardi)</strong></div>
+                <div class="stat-item">Prosodi: <strong>Mikro-variasi & Jeda Nafas Alami</strong></div>
+            </div>
+        </header>
+
+        <main>
+            
+        <div class="card" id="card-1">
+            <div class="card-header">
+                <span class="badge category">Kriteria Visibilitas Hilal</span>
+                <h3>#1. Kriteria Baru MABIMS 2021</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">150.0 ms • 45.8 KB</span>
+                    </div>
+                    <div class="text-content">Kriteria baru MABIMS 2021 menyepakati tinggi hilal mar&#x27;i ≥ 3° dan sudut elongasi geosentris ≥ 6.4°.</div>
+                    <audio controls preload="none">
+                        <source src="sample_01_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">150.0 ms • 49.6 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Kriteria baru Mabims dua ribu dua puluh satu menyepakati tinggi hilal mar-i minimal tiga derajat dan sudut elongasi geosentris minimal enam koma empat derajat.</div>
+                    <audio controls preload="none">
+                        <source src="sample_01_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-2">
+            <div class="card-header">
+                <span class="badge category">Hisab Kiblat</span>
+                <h3>#2. Arah Kiblat dan Jarak Ka&#x27;bah</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">150.0 ms • 63.6 KB</span>
+                    </div>
+                    <div class="text-content">Arah kiblat wilayah Jakarta berada pada sudut 295.15° atau 25.15° dari Barat ke Utara dengan jarak 7920.1 km.</div>
+                    <audio controls preload="none">
+                        <source src="sample_02_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">8108.26 ms • 62.3 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Arah kiblat wilayah Jakarta berada pada sudut dua ratus sembilan puluh lima koma satu lima derajat atau dua puluh lima koma satu lima derajat dari Barat ke Utara dengan jarak tujuh ribu sembilan ratus dua puluh koma satu kilometer.</div>
+                    <audio controls preload="none">
+                        <source src="sample_02_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-3">
+            <div class="card-header">
+                <span class="badge category">Rashdul Kiblat</span>
+                <h3>#3. Fenomena Rashdul Kiblat Global</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">3477.28 ms • 66.9 KB</span>
+                    </div>
+                    <div class="text-content">Fenomena Rashdul Kiblat global terjadi pada 28 Mei (16:18 WIB) dan 16 Juli (16:27 WIB) saat matahari tepat di atas Ka&#x27;bah.</div>
+                    <audio controls preload="none">
+                        <source src="sample_03_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">9981.59 ms • 73.7 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Fenomena Rasydul Kiblat global terjadi pada tanggal dua puluh delapan Mei, pukul enam belas lewat delapan belas menit W-I-B, dan tanggal enam belas Juli, pukul enam belas lewat dua puluh tujuh menit W-I-B, saat matahari tepat di atas Ka&#x27;bah.</div>
+                    <audio controls preload="none">
+                        <source src="sample_03_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-4">
+            <div class="card-header">
+                <span class="badge category">Waktu Salat</span>
+                <h3>#4. Jadwal Salat Digital</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">14607.06 ms • 85.9 KB</span>
+                    </div>
+                    <div class="text-content">Jadwal salat wilayah Surabaya hari ini: Subuh 04:12 WIB, Dzuhur 11:45 WIB, Ashar 15:08 WIB, Maghrib 17:58 WIB, dan Isya 19:10 WIB.</div>
+                    <audio controls preload="none">
+                        <source src="sample_04_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">12233.8 ms • 95.8 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Jadwal salat wilayah Surabaya hari ini, yaitu Subuh pukul empat lewat dua belas menit W-I-B, Dzuhur pukul sebelas lewat empat puluh lima menit W-I-B, Ashar pukul lima belas lewat delapan menit W-I-B, Maghrib pukul tujuh belas lewat lima puluh delapan menit W-I-B, dan Isya pukul sembilan belas lewat sepuluh menit W-I-B.</div>
+                    <audio controls preload="none">
+                        <source src="sample_04_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-5">
+            <div class="card-header">
+                <span class="badge category">Telemetri IoT</span>
+                <h3>#5. Telemetri Hardware Teleskop HILTRON</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">8650.55 ms • 59.5 KB</span>
+                    </div>
+                    <div class="text-content">Status teleskop HILTRON: Mikrokontroler ESP32 dan sensor IMU BNO055 aktif siaga dengan laju tracking 14.5°/jam mengikuti rotasi bumi.</div>
+                    <audio controls preload="none">
+                        <source src="sample_05_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">8888.33 ms • 60.6 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Status teleskop Hiltron, yaitu Mikrokontroler E-S-P tiga puluh dua dan sensor I-M-U B-N-O nol lima lima aktif siaga dengan laju tracking empat belas koma lima derajat per jam mengikuti rotasi bumi.</div>
+                    <audio controls preload="none">
+                        <source src="sample_05_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-6">
+            <div class="card-header">
+                <span class="badge category">Kitab Turats</span>
+                <h3>#6. Literatur Falak Klasik Nusantara</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">7304.49 ms • 43.3 KB</span>
+                    </div>
+                    <div class="text-content">Rujukan hisab klasik mencakup kitab Sullamun Nayyirain karya KH Muhammad Manshur serta Al-Khulashah Al-Wafiyah karya KH Zubair Umar.</div>
+                    <audio controls preload="none">
+                        <source src="sample_06_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">7012.38 ms • 44.7 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Rujukan hisab klasik mencakup kitab Sullamun Nayyirain karya KH Muhammad Manshur serta Al-Khulashah Al-Wafiyah karya KH Zubair Umar.</div>
+                    <audio controls preload="none">
+                        <source src="sample_06_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-7">
+            <div class="card-header">
+                <span class="badge category">Metodologi Hisab</span>
+                <h3>#7. Hisab Hakiki vs Taqribi &amp; Ephemeris</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">7117.37 ms • 41.8 KB</span>
+                    </div>
+                    <div class="text-content">Metode hisab terbagi menjadi hisab taqribi dan hisab hakiki tahqiqi dengan data ephemeris NASA JPL DE421.</div>
+                    <audio controls preload="none">
+                        <source src="sample_07_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">6324.99 ms • 46.1 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Metode hisab terbagi menjadi hisab taqribi dan hisab hakiki tahqiqi dengan data ephemeris Nasa J-P-L D-E empat ratus dua puluh satu.</div>
+                    <audio controls preload="none">
+                        <source src="sample_07_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-8">
+            <div class="card-header">
+                <span class="badge category">Kalender Hijriah</span>
+                <h3>#8. Konversi Penanggalan Hijriah</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">9644.98 ms • 46.1 KB</span>
+                    </div>
+                    <div class="text-content">Tanggal 20 Maret 2026 Masehi bertepatan dengan 1 Syawal 1447 H menurut hisab hakiki wujudul hilal.</div>
+                    <audio controls preload="none">
+                        <source src="sample_08_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">7033.17 ms • 51.8 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">tanggal dua puluh Maret dua ribu dua puluh enam Masehi bertepatan dengan tanggal satu Syawal seribu empat ratus empat puluh tujuh Hijriah menurut hisab hakiki wujudul hilal.</div>
+                    <audio controls preload="none">
+                        <source src="sample_08_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-9">
+            <div class="card-header">
+                <span class="badge category">Gerhana</span>
+                <h3>#9. Fenomena Gerhana Matahari</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">5735.59 ms • 40.5 KB</span>
+                    </div>
+                    <div class="text-content">Gerhana matahari cincin terjadi saat ukuran semidiameter piringan bulan lebih kecil dari piringan matahari di titik apogee.</div>
+                    <audio controls preload="none">
+                        <source src="sample_09_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">5876.7 ms • 41.3 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Gerhana matahari cincin terjadi saat ukuran semidiameter piringan bulan lebih kecil dari piringan matahari di titik apogee.</div>
+                    <audio controls preload="none">
+                        <source src="sample_09_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-10">
+            <div class="card-header">
+                <span class="badge category">Persona &amp; Etika</span>
+                <h3>#10. Sapaan Ramah Santri Falak</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">6650.5 ms • 40.8 KB</span>
+                    </div>
+                    <div class="text-content">Assalamu&#x27;alaikum warahmatullahi wabarakatuh sahabat FalakHub, ada yang bisa HILMI bantu mengenai hisab atau rukyat hari ini?</div>
+                    <audio controls preload="none">
+                        <source src="sample_10_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">7747.62 ms • 40.1 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Assalamu&#x27;alaikum warahmatullahi wabarakatuh sahabat FalakHub, ada yang bisa HILMI bantu mengenai hisab atau ru&#x27;yat hari ini?</div>
+                    <audio controls preload="none">
+                        <source src="sample_10_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-11">
+            <div class="card-header">
+                <span class="badge category">Waktu Salat</span>
+                <h3>#11. Parameter Ikhtiyat Pengaman</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">6403.47 ms • 36.6 KB</span>
+                    </div>
+                    <div class="text-content">Kemenag RI menambahkan ikhtiyat pengaman sebesar 2 s.d 3 menit dari waktu hisab astronomis murni.</div>
+                    <audio controls preload="none">
+                        <source src="sample_11_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">4651.54 ms • 36.6 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Kemenag R-I menambahkan ihtiyat pengaman sebesar dua s. d tiga menit dari waktu hisab astronomis murni.</div>
+                    <audio controls preload="none">
+                        <source src="sample_11_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-12">
+            <div class="card-header">
+                <span class="badge category">Hisab Hilal</span>
+                <h3>#12. Ijtimak dan Umur Bulan</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">5563.23 ms • 50.5 KB</span>
+                    </div>
+                    <div class="text-content">Ijtimak terjadi pukul 03:39 WIB, umur bulan saat maghrib adalah 14 jam 19 menit dengan elongasi 7.2°.</div>
+                    <audio controls preload="none">
+                        <source src="sample_12_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">11713.44 ms • 53.6 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Ijtimak terjadi pukul tiga lewat tiga puluh sembilan menit W-I-B, umur bulan saat maghrib adalah empat belas jam sembilan belas menit dengan elongasi tujuh koma dua derajat.</div>
+                    <audio controls preload="none">
+                        <source src="sample_12_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-13">
+            <div class="card-header">
+                <span class="badge category">Fikih Falak</span>
+                <h3>#13. Perbedaan Mazhab Awal Ashar</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">7947.24 ms • 48.9 KB</span>
+                    </div>
+                    <div class="text-content">Jumhur ulama menetapkan awal Ashar saat bayangan sama panjang (1:1), sedangkan mazhab Hanafi mensyaratkan 2 kali panjang benda.</div>
+                    <audio controls preload="none">
+                        <source src="sample_13_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">8446.13 ms • 52.7 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Jumhur ulama menetapkan awal Ashar saat bayangan sama panjang, satu, yaitu satu, , sedangkan mazhab Hanafi mensyaratkan dua kali panjang benda.</div>
+                    <audio controls preload="none">
+                        <source src="sample_13_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-14">
+            <div class="card-header">
+                <span class="badge category">Guardrail Santri</span>
+                <h3>#14. Penolakan Santun Luar Domain</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">8902.32 ms • 48.7 KB</span>
+                    </div>
+                    <div class="text-content">Mohon maaf sahabat, fokus keahlian saya adalah ilmu falak, hisab rukyat, astronomi, dan pengamatan teleskop antariksa.</div>
+                    <audio controls preload="none">
+                        <source src="sample_14_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">8362.79 ms • 47.7 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Mohon maaf sahabat, fokus keahlian saya adalah ilmu falak, hisab ru&#x27;yat, astronomi, dan pengamatan teleskop antariksa.</div>
+                    <audio controls preload="none">
+                        <source src="sample_14_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="card-15">
+            <div class="card-header">
+                <span class="badge category">Instrumentasi</span>
+                <h3>#15. Toleransi Sensor &amp; Akurasi Kompas</h3>
+            </div>
+            
+            <div class="comparison-grid">
+                <!-- SISI LAMA -->
+                <div class="variant-box variant-lama">
+                    <div class="variant-title">
+                        <span class="pill pill-lama">VERSI LAMA (Mentah / Robotik)</span>
+                        <span class="meta">10719.08 ms • 43.5 KB</span>
+                    </div>
+                    <div class="text-content">Kalibrasi sensor kompas magnetometer memiliki toleransi deviasi sudut ≤ 0.5° untuk menjamin presisi azimut alat.</div>
+                    <audio controls preload="none">
+                        <source src="sample_15_lama.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+
+                <!-- SISI BARU -->
+                <div class="variant-box variant-baru">
+                    <div class="variant-title">
+                        <span class="pill pill-baru">VERSI BARU (Bahasa Lisan HILMI)</span>
+                        <span class="meta">7561.15 ms • 45.3 KB</span>
+                    </div>
+                    <div class="text-content spoken-highlight">Kalibrasi sensor kompas magnetometer memiliki toleransi deviasi sudut maksimal nol koma lima derajat untuk menjamin presisi azimut alat.</div>
+                    <audio controls preload="none">
+                        <source src="sample_15_baru.mp3" type="audio/mpeg">
+                        Browser Anda tidak mendukung elemen audio.
+                    </audio>
+                </div>
+            </div>
+        </div>
+        
+        </main>
+    </div>
+</body>
+</html>

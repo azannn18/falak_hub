@@ -1,0 +1,49 @@
+[
+  {
+    "id": "fenomena_01_fase_bulan",
+    "topik": "Fase-Fase Bulan",
+    "kata_kunci": [
+      "fase bulan",
+      "moon phases",
+      "bulan sabit",
+      "purnama",
+      "kuartir",
+      "cembung"
+    ],
+    "ringkasan_singkat": "Fase bulan adalah penampakan bagian permukaan bulan yang diterangi matahari jika dilihat dari bumi. Terdiri dari 8 fase: bulan baru, sabit awal, kuartir awal, cembung awal, purnama, cembung akhir, kuartir akhir, dan sabit akhir.",
+    "penjelasan_lengkap": "Siklus fase bulan berlangsung sekitar 29,53 hari (periode sinodis). 1) New Moon / Hilal Awal: bulan berada di antara matahari dan bumi. 2) Waxing Crescent: bulan sabit tipis di ufuk barat selepas sunset. 3) First Quarter: setengah piringan bulan tampak terang di barat saat senja. 4) Waxing Gibbous: lebih dari separuh piringan terang. 5) Full Moon (Purnama/Badr): bulan beroposisi 180 derajat terhadap matahari, bersinar semalaman. 6) Waning Gibbous: piringan mulai mengecil. 7) Third/Last Quarter: setengah piringan tampak di timur tengah malam. 8) Waning Crescent: sabit tua sebelum fajar.",
+    "sumber": "Astronomy: A Beginner's Guide to the Universe & Ilmu Falak",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "fenomena_02_equation_of_time",
+    "topik": "Equation of Time (Perata Waktu / Ta'dil al-Waqt)",
+    "kata_kunci": [
+      "equation of time",
+      "perata waktu",
+      "ta'dil waqt",
+      "eot",
+      "analemma",
+      "matahari sejati"
+    ],
+    "ringkasan_singkat": "Equation of Time adalah selisih antara waktu matahari sejati (solar time dari sundial) dan waktu matahari rata-rata (jam dinding/arloji). Selisih ini berkisar antara -14 hingga +16 menit sepanjang tahun.",
+    "penjelasan_lengkap": "Karena orbit bumi mengelilingi matahari berbentuk elips (hukum Kepler kedua: kecepatan bumi bervariasi) dan sumbu rotasi bumi miring 23,44 derajat terhadap bidang orbit (oblikuitas ekliptika), maka gerak harian matahari di langit tidak konstan. Selisih inilah yang disebut Perata Waktu (Equation of Time / EoT). Dalam perhitungan jadwal salat, EoT sangat krusial untuk menentukan saat tepat matahari melintasi meridian (waktu zawal) dari waktu Greenwich rata-rata (GMT/UTC).",
+    "sumber": "Jean Meeus Astronomical Algorithms & Hisab Kontemporer",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "fenomena_03_deklinasi_gerak_semu",
+    "topik": "Deklinasi dan Gerak Semu Tahunan Matahari",
+    "kata_kunci": [
+      "deklinasi matahari",
+      "gerak semu matahari",
+      "solstis",
+      "ekuinoks",
+      "kemiringan bumi"
+    ],
+    "ringkasan_singkat": "Deklinasi adalah sudut posisi benda langit di utara atau selatan ekuator langit. Akibat kemiringan sumbu bumi 23,5 derajat, deklinasi matahari berubah dari +23,5 derajat (Juni) hingga -23,5 derajat (Desember), menyebabkan perubahan musim dan panjang siang-malam.",
+    "penjelasan_lengkap": "Bumi berotasi dengan sumbu miring 23° 26' terhadap bidang revolusinya. Hal ini memunculkan fenomena gerak semu tahunan matahari: pada 21 Maret matahari berada di ekuator (ekuinoks musim semi, deklinasi 0°), 21 Juni mencapai titik balik utara (solstis Juni, deklinasi +23,5°), 23 September kembali di ekuator (ekuinoks musim gugur, deklinasi 0°), dan 22 Desember mencapai titik balik selatan (solstis Desember, deklinasi -23,5°). Perubahan deklinasi ini adalah basis penentuan waktu salat dan fenomena Rashdul Kiblat.",
+    "sumber": "Dasar-Dasar Astronomi Modern & Ephemeris Hisab Rukyat",
+    "tingkat_keyakinan": "tinggi"
+  }
+]

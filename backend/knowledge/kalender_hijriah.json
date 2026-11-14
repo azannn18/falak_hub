@@ -1,0 +1,46 @@
+[
+  {
+    "id": "hijri_01_sistem_kamariyah",
+    "topik": "Sistem Kalender Hijriah Kamariyah",
+    "kata_kunci": [
+      "kalender hijriah",
+      "kalender kamariyah",
+      "lunar calendar",
+      "panjang tahun hijriah",
+      "12 bulan hijriah"
+    ],
+    "ringkasan_singkat": "Kalender Hijriah didasarkan pada peredaran bulan mengelilingi bumi (fase sinodis). Satu bulan memiliki panjang 29 atau 30 hari, sehingga satu tahun Hijriah berjumlah 354 atau 355 hari, kira-kira 10-12 hari lebih pendek dari tahun Masehi.",
+    "penjelasan_lengkap": "Siklus sinodis bulan (dari ijtimak ke ijtimak berikutnya) rata-rata adalah 29 hari 12 jam 44 menit 2,8 detik (29,53059 hari). Karena hari dalam kalender harus bilangan bulat, maka bulan Hijriah berselang-seling antara 29 dan 30 hari. Total hari dalam 12 bulan adalah sekitar 354,367 hari. Selisih 10,875 hari dengan tahun tropis Masehi (365,2422 hari) menyebabkan musim dan perayaan Islam selalu bergeser maju sekitar 11 hari setiap tahun masehi.",
+    "sumber": "Astronomi Islam dan Penanggalan Hijriah",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "hijri_02_urfi_vs_hakiki",
+    "topik": "Kalender Hijriah Urfi vs Hakiki",
+    "kata_kunci": [
+      "hijriah urfi",
+      "hisab urfi",
+      "hijriah hakiki",
+      "hisab hakiki",
+      "penentuan kalender"
+    ],
+    "ringkasan_singkat": "Kalender Hijriah Urfi adalah sistem kalender tabel aritmatis dengan pola tetap 30 dan 29 hari, sedangkan Kalender Hakiki didasarkan pada posisi astronomis bulan yang sesungguhnya di langit.",
+    "penjelasan_lengkap": "Sistem Urfi (aritmatis) membagi bulan ganjil 30 hari dan genap 29 hari, dengan tahun kabisat (355 hari) sebanyak 11 kali dalam siklus 30 tahun (pada tahun ke-2, 5, 7, 10, 13, 16, 18, 21, 24, 26, dan 29). Sistem urfi sangat praktis untuk keperluan administrasi sipil atau konversi cepat, namun tidak boleh dipakai untuk ibadah (Ramadhan, Idul Fitri, Dzulhijjah). Untuk ibadah, umat Islam wajib berpedoman pada hisab/rukyat hakiki yang mencerminkan posisi fisik hilal yang nyata.",
+    "sumber": "Al-Khulashah Al-Wafiyah & Kaidah Fiqh Falak",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "hijri_03_umm_al_qura",
+    "topik": "Kalender Umm al-Qura (Arab Saudi)",
+    "kata_kunci": [
+      "umm al-qura",
+      "kalender arab saudi",
+      "kriteria umm al qura",
+      "penanggalan mekkah"
+    ],
+    "ringkasan_singkat": "Kalender Umm al-Qura adalah kalender resmi Arab Saudi. Kriterianya menetapkan bulan baru masuk jika konjungsi terjadi sebelum matahari terbenam di Mekkah dan bulan terbenam setelah matahari terbenam di Mekkah.",
+    "penjelasan_lengkap": "Kriteria Umm al-Qura yang berlaku sejak 1423 H menyatakan bahwa awal bulan baru dimulai jika: 1) Ijtimak terjadi sebelum matahari terbenam di koordinat Ka'bah Mekkah, dan 2) Bulan terbenam setelah terbenamnya matahari (moonset after sunset) di Mekkah. Kriteria ini berlaku untuk urusan sipil administratif di Arab Saudi, namun untuk awal Ramadhan, Syawal, dan Dzulhijjah, otoritas kehakiman Arab Saudi tetap menggelar rukyatul hilal resmi.",
+    "sumber": "Official Umm al-Qura Calendar Guidelines",
+    "tingkat_keyakinan": "tinggi"
+  }
+]

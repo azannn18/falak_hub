@@ -1,0 +1,96 @@
+[
+  {
+    "id": "salat_01_subuh_imsak",
+    "topik": "Waktu Subuh dan Imsak",
+    "kata_kunci": [
+      "subuh",
+      "imsak",
+      "fajar shadiq",
+      "sudut subuh",
+      "20 derajat subuh",
+      "waktu subuh"
+    ],
+    "ringkasan_singkat": "Waktu Subuh dimulai saat terbitnya fajar shadiq, yaitu cahaya putih melintang di ufuk timur. Kemenag RI menetapkan ketinggian matahari -20 derajat di bawah ufuk. Waktu imsak ditetapkan sekitar 10 menit sebelum azan Subuh sebagai bentuk kehati-hatian.",
+    "penjelasan_lengkap": "Secara syar'i, batas awal salat Subuh adalah fajar shadiq (astronomical dawn). Di Indonesia, Kementerian Agama menetapkan sudut depresi matahari -20 derajat (didukung oleh hisab para ulama nusantara terdahulu). Sebagian lembaga internasional seperti MWL atau ISNA menggunakan sudut -18 derajat atau -15 derajat tergantung letak lintang geografis. Waktu imsak (menahan diri) adalah tradisi kehati-hatian (ihtiyath) warisan ulama Syafi'iyah di Nusantara berjarak sekitar 50 ayat Al-Qur'an atau setara 10 menit sebelum azan subuh berkumandang.",
+    "sumber": "Pedoman Penentuan Jadwal Waktu Salat Kemenag RI",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "salat_02_terbit_dhuha",
+    "topik": "Waktu Terbit (Syuruq) dan Waktu Dhuha",
+    "kata_kunci": [
+      "terbit",
+      "syuruq",
+      "dhuha",
+      "ketinggian dhuha",
+      "satu tombak",
+      "waktu dhuha"
+    ],
+    "ringkasan_singkat": "Terbit atau syuruq terjadi ketika piringan atas matahari menyentuh ufuk hakiki (ketinggian sekitar -0,833 derajat). Salat Dhuha dimulai ketika matahari naik setinggi satu tombak atau sekitar 3,5 hingga 4,5 derajat di atas ufuk (sekitar 15-20 menit setelah terbit).",
+    "penjelasan_lengkap": "Waktu syuruq menandai berakhirnya waktu subuh, saat piringan atas matahari mulai muncul di ufuk mar'i timur. Ketinggian matematis titik tengah matahari saat itu adalah -50 menit busur (-0,833 derajat) memperhitungkan refraksi 34 menit dan semidiameter 16 menit. Waktu dhuha dimulai ketika matahari naik setinggi 'qadra rumh' (kira-kira 3,5 derajat hingga 4,5 derajat atau setara 15-20 menit pasca syuruq) dan berakhir sesaat sebelum matahari mencapai kulminasi (zawal).",
+    "sumber": "Kitab Fathul Qorib & Hisab Praktis Falakiyah",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "salat_03_dzuhur_zawal",
+    "topik": "Waktu Dzuhur dan Istiwa (Zawal)",
+    "kata_kunci": [
+      "dzuhur",
+      "zawal",
+      "istiwa",
+      "meridian",
+      "kulminasi matahari",
+      "waktu dzuhur"
+    ],
+    "ringkasan_singkat": "Waktu Dzuhur dimulai saat matahari tergelincir ke arah barat dari garis meridian langit (zawalusy syams). Pada saat tepat di meridian (istiwa'), salat dilarang, dan setelah bergeser sekitar 2 menit waktu Dzuhur resmi masuk.",
+    "penjelasan_lengkap": "Istiwa' adalah peristiwa ketika titik tengah matahari tepat melintasi meridian langit lokal (kulminasi atas / transit). Pada saat tepat tengah hari ini, bayangan benda tegak berada pada panjang terpendeknya (bayangan istiwa). Salat dilarang pada detik tepat istiwa' tersebut. Begitu matahari bergeser sedikit ke barat (zawal), waktu Dzuhur masuk. Dalam praktiknya, ditambahkan ikhtiyat (safety margin) sebesar 2 hingga 3 menit dari waktu zawal matematis.",
+    "sumber": "Fiqh Sunnah & Ephemeris Hisab Rukyat Kemenag RI",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "salat_04_ashar_mazhab",
+    "topik": "Waktu Ashar dan Perbedaan Mazhab",
+    "kata_kunci": [
+      "ashar",
+      "waktu ashar",
+      "mazhab ashar",
+      "hanafi ashar",
+      "syafii ashar",
+      "panjang bayangan"
+    ],
+    "ringkasan_singkat": "Waktu Ashar dimulai saat panjang bayangan suatu benda sama dengan tinggi benda tersebut ditambah bayangan istiwa' menurut mayoritas ulama (Syafi'i, Maliki, Hambali). Mazhab Hanafi berpendapat waktu Ashar dimulai saat bayangan mencapai dua kali tinggi benda.",
+    "penjelasan_lengkap": "Rumus astronomis waktu Ashar menghitung altitude matahari h: cot(h) = tan(zawal) + n, di mana n adalah faktor rasio bayangan. Mazhab Jumhur (Syafi'i, Maliki, Hambali) menetapkan n = 1 (panjang bayangan sama dengan panjang benda aslinya ditambah sisa bayangan zawal). Mazhab Hanafi menetapkan n = 2 (panjang bayangan dua kali lipat panjang benda ditambah sisa bayangan zawal), sehingga jadwal Ashar mazhab Hanafi lebih lambat sekitar 40-60 menit dibanding mazhab jumhur.",
+    "sumber": "Al-Mughni Ibnu Qudamah & Hisab Falakiyah Kontemporer",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "salat_05_maghrib_isya",
+    "topik": "Waktu Maghrib dan Isya",
+    "kata_kunci": [
+      "maghrib",
+      "isya",
+      "mega merah",
+      "syafaq ahmar",
+      "sudut isya",
+      "waktu maghrib"
+    ],
+    "ringkasan_singkat": "Waktu Maghrib dimulai saat seluruh piringan matahari terbenam sempurna di bawah ufuk mar'i. Waktu Isya masuk saat mega merah (syafaqul ahmar) di ufuk barat hilang sempurna, dengan ketinggian matahari -18 derajat di bawah ufuk standar Kemenag RI.",
+    "penjelasan_lengkap": "Terbenamnya matahari (ghurub) secara syar'i terjadi saat piringan atas matahari telah lenyap di bawah ufuk mar'i (altitude matahari titik tengah = -50' atau -0,833 derajat plus koreksi elevasi). Waktu Maghrib berakhir dan waktu Isya masuk saat cahaya senja merah (syafaqul ahmar / astronomical twilight) telah hilang sepenuhnya. Kemenag RI menetapkan sudut depresi matahari untuk awal Isya adalah -18 derajat di bawah ufuk hakiki, sementara sebagian negara lain menggunakan sudut -17,5 derajat atau -19 derajat.",
+    "sumber": "Pedoman Hisab Rukyat Kemenag RI & Fiqh Empat Mazhab",
+    "tingkat_keyakinan": "tinggi"
+  },
+  {
+    "id": "salat_06_ikhtiyat",
+    "topik": "Konsep Ikhtiyat (Waktu Pengaman)",
+    "kata_kunci": [
+      "ikhtiyat",
+      "safety margin",
+      "pengaman jadwal",
+      "koreksi menit salat"
+    ],
+    "ringkasan_singkat": "Ikhtiyat adalah penambahan waktu sekitar 1 hingga 2 menit pada jadwal salat sebagai langkah kehati-hatian untuk mengantisipasi selisih lintang-bujur daerah, ketinggian tempat, dan pembulatan detik.",
+    "penjelasan_lengkap": "Dalam pembuatan jadwal salat suatu kabupaten/kota yang mencakup area berjarak puluhan kilometer, titik koordinat acuan biasanya berada di masjid agung kota. Waktu matahari terbit atau terbenam dapat berbeda beberapa detik hingga 1-2 menit di ujung barat atau timur kabupaten tersebut. Ulama falak menetapkan penambahan ikhtiyat (ihtiyath) umumnya 2 menit (kecuali syuruq yang dikurangi 2 menit untuk keamanan) agar salat dipastikan masuk tepat waktu di seluruh cakupan daerah.",
+    "sumber": "Standarisasi Jadwal Salat Kemenag RI",
+    "tingkat_keyakinan": "tinggi"
+  }
+]

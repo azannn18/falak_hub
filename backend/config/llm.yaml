@@ -1,0 +1,40 @@
+llm:
+  # Urutan prioritas provider (fallback bertingkat)
+  priority:
+    - gemini
+    - openai_compat
+    - ollama
+    - offline_expert
+
+  # Timeout per request ke provider (detik)
+  timeout: 8.0
+
+  # Circuit Breaker: cegah latensi menumpuk saat provider sedang down
+  circuit_breaker:
+    failure_threshold: 3
+    cooldown_sec: 60.0
+
+  # Cache in-memory pertanyaan umum non-personal (TTL jam)
+  cache:
+    enabled: true
+    ttl_hours: 24
+
+  # Konfigurasi masing-masing provider
+  providers:
+    gemini:
+      model: "gemini-2.0-flash"
+      detailed_model: "gemini-2.0-flash"
+      enable_grounding: true
+
+    openai_compat:
+      name: "groq"
+      model: "llama-3.3-70b-versatile"
+      base_url: "https://api.groq.com/openai/v1"
+
+    ollama:
+      base_url: "http://localhost:11434"
+      model: "llama3.2"
+
+    offline_expert:
+      model: "hiltron-falak-expert-v2"
+
