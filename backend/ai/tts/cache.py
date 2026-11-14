@@ -14,12 +14,18 @@ from typing import Optional
 class TTSAudioCache:
     def __init__(self, cache_dir: Optional[str] = None):
         if cache_dir is None:
-            base_dir = Path(__file__).resolve().parent
-            self.cache_dir = base_dir / "cache"
+            if os.environ.get("VERCEL"):
+                self.cache_dir = Path("/tmp") / "hiltron_tts_cache"
+            else:
+                base_dir = Path(__file__).resolve().parent
+                self.cache_dir = base_dir / "cache"
         else:
             self.cache_dir = Path(cache_dir)
 
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
 
     def _make_key(self, text: str, voice: str, rate: str, pitch: str) -> str:
         raw = f"{voice}::{rate}::{pitch}::{text.strip()}"

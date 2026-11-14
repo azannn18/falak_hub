@@ -70,8 +70,14 @@ class FalakAssistantBrain:
         self.cities: List[Dict[str, Any]] = self._load_offline_cities()
 
         # Path log unanswered queries
-        self.log_dir = Path(__file__).resolve().parent.parent / "logs"
-        self.log_dir.mkdir(parents=True, exist_ok=True)
+        if os.environ.get("VERCEL"):
+            self.log_dir = Path("/tmp") / "hiltron_logs"
+        else:
+            self.log_dir = Path(__file__).resolve().parent.parent / "logs"
+        try:
+            self.log_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
         self.unanswered_log_path = self.log_dir / "unanswered.jsonl"
 
         # Multi-Provider Router with Fallback & Circuit Breaker
